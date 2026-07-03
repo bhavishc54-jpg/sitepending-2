@@ -1,0 +1,1499 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="description"
+      content="A romantic interactive love letter website made for Nikita."
+    />
+    <title>For My Princess Nikita</title>
+    <style>
+      :root {
+        color-scheme: dark;
+        --ink: #fff0f3;
+        --muted: rgba(255, 214, 231, 0.62);
+        --soft: rgba(255, 255, 255, 0.07);
+        --line: rgba(255, 255, 255, 0.14);
+        --pink: #ff4d6d;
+        --blush: #ff85a1;
+        --rose: #ffb3c1;
+        --dark: #1a050d;
+        --panel: rgba(255, 255, 255, 0.06);
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      html,
+      body {
+        min-height: 100%;
+      }
+
+      body {
+        margin: 0;
+        overflow-x: hidden;
+        font-family: Georgia, "Times New Roman", serif;
+        color: var(--ink);
+        background:
+          radial-gradient(circle at 12% 15%, rgba(255, 77, 109, 0.24), transparent 28rem),
+          radial-gradient(circle at 88% 20%, rgba(255, 179, 193, 0.17), transparent 25rem),
+          linear-gradient(135deg, #16040b 0%, #2c0b17 52%, #130309 100%);
+      }
+
+      button,
+      textarea,
+      input {
+        font: inherit;
+      }
+
+      button {
+        border: 0;
+      }
+
+      button:focus-visible,
+      input:focus-visible,
+      textarea:focus-visible,
+      [role="button"]:focus-visible {
+        outline: 2px solid rgba(255, 240, 243, 0.92);
+        outline-offset: 4px;
+        box-shadow: 0 0 0 6px rgba(255, 77, 109, 0.16);
+      }
+
+      .app {
+        position: relative;
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: space-between;
+        padding: 92px 16px 28px;
+        isolation: isolate;
+      }
+
+      .grain {
+        position: fixed;
+        inset: 0;
+        pointer-events: none;
+        z-index: -1;
+        opacity: 0.18;
+        background-image:
+          linear-gradient(rgba(255, 255, 255, 0.04) 1px, transparent 1px),
+          linear-gradient(90deg, rgba(255, 255, 255, 0.035) 1px, transparent 1px);
+        background-size: 34px 34px;
+        mask-image: radial-gradient(circle at 50% 50%, black, transparent 80%);
+      }
+
+      .petal {
+        position: fixed;
+        top: -24px;
+        width: var(--size);
+        height: var(--size);
+        left: var(--left);
+        border-radius: 60% 0 60% 60%;
+        background: var(--blush);
+        opacity: 0.28;
+        transform: rotate(35deg);
+        animation: fall var(--duration) linear infinite;
+        animation-delay: var(--delay);
+        pointer-events: none;
+        z-index: 0;
+      }
+
+      @keyframes fall {
+        to {
+          transform: translateY(110vh) rotate(395deg);
+          opacity: 0;
+        }
+      }
+
+      .topbar {
+        position: fixed;
+        top: 14px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: min(94vw, 560px);
+        z-index: 10;
+        padding: 1px;
+        border-radius: 20px;
+        background: linear-gradient(135deg, rgba(255,255,255,0.16), rgba(255,77,109,0.28), rgba(255,179,193,0.12));
+        box-shadow: 0 18px 44px rgba(0, 0, 0, 0.42);
+        display: none;
+      }
+
+      .topbar.visible {
+        display: block;
+      }
+
+      .topbar-inner {
+        border: 1px solid rgba(255,255,255,0.07);
+        border-radius: 19px;
+        background: rgba(255,255,255,0.06);
+        backdrop-filter: blur(18px);
+        padding: 13px 14px 12px;
+      }
+
+      .topbar-row {
+        display: flex;
+        align-items: flex-end;
+        justify-content: space-between;
+        gap: 18px;
+        margin-bottom: 9px;
+      }
+
+      .label {
+        margin: 0 0 5px;
+        font-family: "Trebuchet MS", sans-serif;
+        font-size: 10px;
+        font-weight: 800;
+        letter-spacing: 0.28em;
+        text-transform: uppercase;
+        color: rgba(255, 179, 193, 0.82);
+      }
+
+      .progress-text {
+        margin: 0;
+        font-size: 14px;
+        color: rgba(255,255,255,0.92);
+      }
+
+      .percent {
+        font-family: "Trebuchet MS", sans-serif;
+        font-size: 24px;
+        line-height: 1;
+      }
+
+      .bar {
+        height: 7px;
+        overflow: hidden;
+        border-radius: 999px;
+        background: rgba(0, 0, 0, 0.34);
+        border: 1px solid rgba(255,255,255,0.08);
+      }
+
+      .bar-fill {
+        height: 100%;
+        width: 0%;
+        border-radius: inherit;
+        background: linear-gradient(90deg, var(--pink), var(--blush), var(--rose));
+        box-shadow: 0 0 14px rgba(255, 77, 109, 0.65);
+        transition: width 500ms ease;
+      }
+
+      .music {
+        position: fixed;
+        right: 14px;
+        bottom: 14px;
+        z-index: 20;
+        border: 1px solid rgba(255,255,255,0.14);
+        border-radius: 999px;
+        background: rgba(255,255,255,0.08);
+        color: var(--ink);
+        padding: 10px 14px;
+        font-family: "Trebuchet MS", sans-serif;
+        font-size: 12px;
+        letter-spacing: 0.08em;
+        cursor: pointer;
+        backdrop-filter: blur(12px);
+      }
+
+      main {
+        width: min(100%, 560px);
+        margin: auto;
+        position: relative;
+        z-index: 2;
+      }
+
+      .card {
+        width: 100%;
+        max-width: 100%;
+        position: relative;
+        border: 1px solid var(--line);
+        border-radius: 22px;
+        background: var(--panel);
+        backdrop-filter: blur(20px);
+        box-shadow: 0 22px 64px rgba(0,0,0,0.5);
+        padding: clamp(24px, 5vw, 38px);
+        text-align: center;
+        overflow-wrap: anywhere;
+        animation: enter 520ms cubic-bezier(0.16, 1, 0.3, 1);
+      }
+
+      @keyframes enter {
+        from {
+          opacity: 0;
+          transform: translateY(16px) scale(0.97);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0) scale(1);
+        }
+      }
+
+      h1,
+      h2 {
+        margin: 0;
+        font-weight: 400;
+        font-style: italic;
+        letter-spacing: 0;
+      }
+
+      h1 {
+        font-size: clamp(30px, 7vw, 46px);
+        line-height: 1.04;
+      }
+
+      h2 {
+        font-size: clamp(25px, 6vw, 38px);
+        line-height: 1.12;
+      }
+
+      p {
+        line-height: 1.62;
+      }
+
+      .sub {
+        margin: 12px auto 26px;
+        max-width: 430px;
+        color: var(--muted);
+        font-family: "Trebuchet MS", sans-serif;
+        font-size: 11px;
+        font-weight: 800;
+        letter-spacing: 0.18em;
+        text-transform: uppercase;
+      }
+
+      .copy {
+        color: rgba(255, 240, 243, 0.88);
+        max-width: 420px;
+        margin: 18px auto 28px;
+        font-size: 15px;
+      }
+
+      .clock {
+        display: inline-flex;
+        margin-bottom: 18px;
+        border: 1px solid rgba(255,255,255,0.12);
+        border-radius: 999px;
+        padding: 8px 12px;
+        background: rgba(255,255,255,0.06);
+        color: rgba(255, 179, 193, 0.82);
+        font-family: "Trebuchet MS", sans-serif;
+        font-size: 10px;
+        font-weight: 800;
+        letter-spacing: 0.16em;
+        text-transform: uppercase;
+      }
+
+      .cat {
+        width: 112px;
+        height: 112px;
+        margin: 0 auto 16px;
+        cursor: pointer;
+        transition: transform 220ms ease;
+        filter: drop-shadow(0 10px 22px rgba(255,77,109,0.16));
+      }
+
+      .cat:hover {
+        transform: translateY(-3px) scale(1.03);
+      }
+
+      .small-cat {
+        position: absolute;
+        top: -38px;
+        right: 4px;
+        width: 76px;
+        height: 76px;
+      }
+
+      .btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 46px;
+        border-radius: 999px;
+        padding: 13px 24px;
+        background: #fff;
+        color: #1a050d;
+        font-family: "Trebuchet MS", sans-serif;
+        font-size: 12px;
+        font-weight: 900;
+        letter-spacing: 0.18em;
+        text-transform: uppercase;
+        cursor: pointer;
+        box-shadow: 0 14px 34px rgba(255,255,255,0.08);
+        transition: transform 180ms ease, box-shadow 180ms ease, opacity 180ms ease;
+      }
+
+      .btn:hover {
+        transform: translateY(-1px) scale(1.02);
+        box-shadow: 0 18px 38px rgba(255,77,109,0.24);
+      }
+
+      .btn:disabled {
+        opacity: 0.45;
+        cursor: not-allowed;
+        transform: none;
+      }
+
+      .btn-pink {
+        color: #fff;
+        background: linear-gradient(90deg, var(--pink), var(--blush));
+      }
+
+      .ghost-btn {
+        border: 1px solid rgba(255,255,255,0.16);
+        background: rgba(255,255,255,0.07);
+        color: var(--ink);
+      }
+
+      .stack {
+        display: grid;
+        gap: 16px;
+      }
+
+      .runner-wrap {
+        position: relative;
+        height: 58px;
+      }
+
+      .runner {
+        position: absolute;
+        width: min(78%, 340px);
+        max-width: calc(100vw - 64px);
+        transition: left 170ms ease, top 170ms ease;
+      }
+
+      textarea,
+      input {
+        width: 100%;
+        max-width: 100%;
+        border: 1px solid rgba(255,255,255,0.12);
+        border-bottom-color: rgba(255,133,161,0.55);
+        border-radius: 16px;
+        background: rgba(255,255,255,0.06);
+        color: var(--ink);
+        outline: 0;
+        padding: 15px 16px;
+        font-size: 15px;
+        line-height: 1.55;
+        resize: vertical;
+        transition: border-color 180ms ease, background 180ms ease, box-shadow 180ms ease;
+      }
+
+      textarea {
+        min-height: 132px;
+      }
+
+      textarea:focus,
+      input:focus {
+        border-color: rgba(255,133,161,0.9);
+        background: rgba(255,255,255,0.09);
+        box-shadow: 0 0 0 4px rgba(255,77,109,0.12);
+      }
+
+      ::placeholder {
+        color: rgba(255,255,255,0.32);
+      }
+
+      .letter {
+        max-height: 420px;
+        overflow: auto;
+        padding: 22px;
+        border: 1px solid rgba(255,255,255,0.12);
+        border-radius: 18px;
+        background: rgba(255,255,255,0.06);
+        text-align: left;
+      }
+
+      .letter p {
+        margin: 0 0 12px;
+      }
+
+      .gift {
+        width: 168px;
+        height: 168px;
+        margin: 14px auto 22px;
+        display: grid;
+        place-items: center;
+        cursor: pointer;
+        animation: giftPulse 1900ms ease-in-out infinite;
+      }
+
+      @keyframes giftPulse {
+        50% {
+          transform: translateY(-4px) rotate(-1deg) scale(1.05);
+          filter: drop-shadow(0 0 22px rgba(255,77,109,0.45));
+        }
+      }
+
+      .poem,
+      .appreciation {
+        border: 1px solid rgba(255,255,255,0.12);
+        border-radius: 18px;
+        background: rgba(255,255,255,0.06);
+        padding: 22px;
+        margin: 10px auto 24px;
+        max-width: 430px;
+      }
+
+      .poem p {
+        margin: 0 0 8px;
+        font-style: italic;
+      }
+
+      .stars {
+        display: flex;
+        justify-content: center;
+        gap: 8px;
+        margin: 10px 0 22px;
+      }
+
+      .heart-rate {
+        font-size: 34px;
+        min-width: 44px;
+        min-height: 44px;
+        background: transparent;
+        cursor: pointer;
+        filter: drop-shadow(0 4px 10px rgba(255, 77, 109, 0.24));
+        transition: transform 160ms ease;
+      }
+
+      .heart-rate:hover {
+        transform: scale(1.16);
+      }
+
+      .transition {
+        position: fixed;
+        inset: 0;
+        z-index: 50;
+        display: none;
+        align-items: center;
+        justify-content: center;
+        padding: 24px;
+        text-align: center;
+        background: linear-gradient(135deg, #1a050d, #2b0b16);
+      }
+
+      .transition.visible {
+        display: flex;
+      }
+
+      .transition-card {
+        max-width: 620px;
+        border: 1px solid rgba(255,255,255,0.12);
+        border-radius: 28px;
+        padding: clamp(28px, 8vw, 48px);
+        background: rgba(255,255,255,0.06);
+        box-shadow: 0 28px 70px rgba(0,0,0,0.56);
+        animation: enter 500ms cubic-bezier(0.16, 1, 0.3, 1);
+      }
+
+      .transition-card p {
+        margin: 0;
+        font-size: clamp(24px, 7vw, 44px);
+        font-style: italic;
+      }
+
+      .float-heart {
+        position: fixed;
+        pointer-events: none;
+        z-index: 60;
+        animation: floatUp 1100ms ease-out forwards;
+      }
+
+      .cursor-sparkle {
+        position: fixed;
+        left: 0;
+        top: 0;
+        width: var(--sparkle-size, 8px);
+        height: var(--sparkle-size, 8px);
+        color: var(--sparkle-color, rgba(255, 240, 243, 0.9));
+        pointer-events: none;
+        z-index: 12;
+        display: grid;
+        place-items: center;
+        font-size: var(--sparkle-size, 8px);
+        line-height: 1;
+        opacity: 0;
+        transform: translate3d(var(--sparkle-x, 0), var(--sparkle-y, 0), 0) scale(0.72) rotate(var(--sparkle-rotation, 0deg));
+        filter:
+          drop-shadow(0 0 5px var(--sparkle-glow, rgba(255, 133, 161, 0.42)))
+          drop-shadow(0 0 12px rgba(255, 255, 255, 0.14));
+        mix-blend-mode: screen;
+        animation: cursorLoveDust var(--sparkle-duration, 880ms) cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        will-change: transform, opacity;
+      }
+
+      .cursor-sparkle.dot {
+        border-radius: 999px;
+        background:
+          radial-gradient(circle, rgba(255, 255, 255, 0.96) 0 18%, var(--sparkle-color, rgba(255, 179, 193, 0.82)) 42%, transparent 72%);
+      }
+
+      .cursor-sparkle.star,
+      .cursor-sparkle.heart {
+        width: auto;
+        height: auto;
+        text-shadow: 0 0 10px var(--sparkle-glow, rgba(255, 133, 161, 0.45));
+      }
+
+      @keyframes cursorLoveDust {
+        0% {
+          opacity: 0;
+          transform: translate3d(var(--sparkle-x, 0), var(--sparkle-y, 0), 0) scale(0.45) rotate(var(--sparkle-rotation, 0deg));
+        }
+        18% {
+          opacity: var(--sparkle-opacity, 0.78);
+        }
+        100% {
+          opacity: 0;
+          transform:
+            translate3d(
+              calc(var(--sparkle-x, 0) + var(--sparkle-drift-x, 0px)),
+              calc(var(--sparkle-y, 0) + var(--sparkle-drift-y, -28px)),
+              0
+            )
+            scale(1.16)
+            rotate(calc(var(--sparkle-rotation, 0deg) + var(--sparkle-spin, 34deg)));
+        }
+      }
+
+      @keyframes floatUp {
+        to {
+          transform: translateY(-64px) scale(1.3);
+          opacity: 0;
+        }
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        .cursor-sparkle {
+          display: none;
+        }
+      }
+
+      footer {
+        position: relative;
+        z-index: 2;
+        margin-top: 28px;
+        color: rgba(255, 179, 193, 0.34);
+        font-family: "Trebuchet MS", sans-serif;
+        font-size: 10px;
+        font-weight: 800;
+        letter-spacing: 0.18em;
+        text-transform: uppercase;
+        text-align: center;
+      }
+
+      @media (max-width: 520px) {
+        .app {
+          padding-top: 86px;
+        }
+
+        .card {
+          border-radius: 18px;
+        }
+
+        .small-cat {
+          right: -4px;
+          width: 66px;
+          height: 66px;
+        }
+
+        .btn {
+          width: 100%;
+          letter-spacing: 0.12em;
+          padding-inline: 16px;
+        }
+
+        .music {
+          left: 14px;
+          right: auto;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <audio id="bgm" src="src/assets/leberch-love-story-437006.mp3" loop preload="auto"></audio>
+    <div class="grain"></div>
+    <div id="petals"></div>
+    <div class="topbar" id="topbar">
+      <div class="topbar-inner">
+        <div class="topbar-row">
+          <div>
+            <p class="label">💖 Love Journey</p>
+            <p class="progress-text">Question <span id="questionNo">01</span> <span style="color: rgba(255,179,193,.55)">of <span id="questionTotal">8</span></span></p>
+          </div>
+          <div style="text-align: right">
+            <div class="percent" id="percent">0%</div>
+            <div class="label" style="font-size: 8px; margin: 3px 0 0">Completed</div>
+          </div>
+        </div>
+        <div class="bar"><div class="bar-fill" id="barFill"></div></div>
+      </div>
+    </div>
+
+    <button class="music" id="musicBtn" type="button" aria-label="Toggle background music" aria-pressed="false">🔇 Music Off</button>
+
+    <div class="app">
+      <main id="screen"></main>
+      <footer>Copyright © 2026 Bhavish. All Rights Reserved.</footer>
+    </div>
+
+    <div class="transition" id="transition">
+      <div class="transition-card">
+        <div style="font-size: 34px; margin-bottom: 16px">💝</div>
+        <p id="sweetText"></p>
+        <div class="label" style="margin-top: 22px">Saving your thoughts in my heart...</div>
+      </div>
+    </div>
+
+    <script>
+      const OWNER_EMAIL = "your@email.com";
+      const EMAILJS_CONFIG = {
+        publicKey: "",
+        serviceId: "",
+        templateId: ""
+      };
+      const AUDIO_SOURCES = [
+        "src/assets/leberch-love-story-437006.mp3",
+        "src/assets/bgm.mp3"
+      ];
+      const STORAGE_KEY = "nikita-love-static";
+
+      const questions = [
+        {
+          id: "q1",
+          type: "textarea",
+          title: "How are you feeling right now? 💖",
+          subText: "Be honest with me baby...",
+          placeholder: "Tell me everything..."
+        },
+        {
+          id: "q2",
+          type: "textarea",
+          title: "Abhi bhi gussa ho mere se? 🥺",
+          subText: "Please batao na...",
+          placeholder: "Jo feel ho raha hai likh do..."
+        },
+        {
+          id: "q3",
+          type: "textarea",
+          title: "Yrr... Kya ho gaya tha apko? 🥺😢",
+          subText: "Pata hai kitna bura laga mujhe kal... Aap ignore toh mat kiya karo. Agar aapka mann nahi ho baat karne ka, toh bas mujhe bata diya karo. Main samajh jaunga. 💗",
+          placeholder: "Batao na yrr, kya baat hui thi..."
+        },
+        {
+          id: "q4",
+          type: "appreciation",
+          title: "I Love You So Much ❤️",
+          subText: "Meri Cutie Princess 💖👑"
+        },
+        {
+          id: "q5",
+          type: "textarea",
+          title: "Pic kab bhej rahi ho ab? 🥺📸",
+          subText: "Mera mann ho raha hai aapko dekhne ka. VN's bhi bhejo! 💕",
+          placeholder: "Kab bhejogi? Promise karo..."
+        },
+        {
+          id: "q6",
+          type: "letter",
+          title: "❤️ A Letter For You",
+          subText: "Please read this from your heart..."
+        },
+        {
+          id: "rq1",
+          type: "textarea",
+          title: "Are you afraid of losing me?",
+          subText: "Tell me honestly, meri jaan...",
+          placeholder: "Write what your heart feels..."
+        },
+        {
+          id: "rq2",
+          type: "textarea",
+          title: "What is one thing about me that scares you, and you want me to change or improve?",
+          subText: "I promise I will read this softly and understand you.",
+          placeholder: "Tell me what I should change or improve..."
+        },
+        {
+          id: "rq3",
+          type: "textarea",
+          title: "Do I make you feel loved, safe, and happy?",
+          subText: "Your comfort matters to me the most.",
+          placeholder: "Tell me if I make you feel loved, safe, and happy..."
+        },
+        {
+          id: "rq4",
+          type: "textarea",
+          title: "Am I loving you the way you want to be loved?",
+          subText: "I want to love you in the way your heart needs.",
+          placeholder: "Tell me how you want to be loved..."
+        },
+        {
+          id: "rq5",
+          type: "textarea",
+          title: "I am sorry for the times when I do something wrong. Please don’t get very angry at me, yrr. I get scared when that happens. I really don’t want to hurt you.",
+          subText: "This is from my heart. Please write anything you want me to understand.",
+          placeholder: "Write your feelings here..."
+        },
+        {
+          id: "rq6",
+          type: "textarea",
+          title: "I will always love you, yrr. My heart beats only for you, and I always keep thinking about you.",
+          subText: "A little forever promise from me to you.",
+          placeholder: "Write something for me, my princess..."
+        },
+        {
+          id: "gq1",
+          type: "input",
+          title: "Why do you want to open this gift? 🎁",
+          subText: "Answer before opening...",
+          placeholder: "Because I love you, or because you are curious?"
+        },
+        {
+          id: "gq2",
+          type: "input",
+          title: "What if you don't like the gift? 🎀",
+          subText: "One last check...",
+          placeholder: "Will you still smile and hug me?"
+        }
+      ];
+
+      const sweetLines = [
+        "Tum meri zindagi ka sabse khoobsurat hissa ho... 🌸",
+        "Har pal tere saath bitana chahta hoon... 💖",
+        "Teri muskurahat meri duniya hai... ✨",
+        "You're the reason I believe in love... 💕",
+        "Meri princess, meri jaan... 👑",
+        "Every moment with you is magical... 🌟",
+        "Tum ho toh sab kuch hai mere paas... 💝",
+        "I fall in love with you more every day... 🩷",
+        "Tera saath meri sabse badi dua hai... 🙏💖",
+        "Forever and always, my love... 💍"
+      ];
+
+      const state = {
+        page: "splash",
+        answers: {},
+        sweetIndex: 0,
+        rating: 0,
+        review: "",
+        giftOpen: false,
+        musicOn: false,
+        audioIndex: 0,
+        runnerLeft: "28%",
+        runnerTop: "0px"
+      };
+
+      const screen = document.getElementById("screen");
+      const topbar = document.getElementById("topbar");
+      const bgm = document.getElementById("bgm");
+      const musicBtn = document.getElementById("musicBtn");
+
+      function setMusicButton(isOn, label) {
+        if (!musicBtn) return;
+        musicBtn.textContent = label || (isOn ? "🎵 Music On" : "🔇 Music Off");
+        musicBtn.setAttribute("aria-pressed", String(Boolean(isOn)));
+      }
+
+      function setAudioSource(index = 0) {
+        if (!bgm) return false;
+        const safeIndex = Math.max(0, Math.min(index, AUDIO_SOURCES.length - 1));
+        const nextSrc = AUDIO_SOURCES[safeIndex];
+        if (!nextSrc) return false;
+        state.audioIndex = safeIndex;
+        if (!bgm.getAttribute("src") || !bgm.getAttribute("src").endsWith(nextSrc)) {
+          bgm.src = nextSrc;
+          bgm.load();
+        }
+        return true;
+      }
+
+      function handleAudioMissing() {
+        if (!bgm) return;
+        const nextIndex = state.audioIndex + 1;
+        if (nextIndex < AUDIO_SOURCES.length) {
+          setAudioSource(nextIndex);
+          if (state.musicOn) playMusic();
+          return;
+        }
+        state.musicOn = false;
+        save();
+        setMusicButton(false, "🔇 Music Unavailable");
+      }
+
+      function safeStorage(action, fallback = null) {
+        try {
+          if (!window.localStorage) return fallback;
+          return action(window.localStorage);
+        } catch (error) {
+          return fallback;
+        }
+      }
+
+      function normalizeState() {
+        state.answers = state.answers && typeof state.answers === "object" ? state.answers : {};
+        state.page = typeof state.page === "string" ? state.page : "splash";
+        state.sweetIndex = Number.isFinite(Number(state.sweetIndex)) ? Number(state.sweetIndex) : 0;
+        state.rating = Number.isFinite(Number(state.rating)) ? Number(state.rating) : 0;
+        state.review = typeof state.review === "string" ? state.review : "";
+        state.giftOpen = Boolean(state.giftOpen);
+        state.musicOn = Boolean(state.musicOn);
+        state.audioIndex = Number.isInteger(state.audioIndex) ? state.audioIndex : 0;
+        state.runnerLeft = typeof state.runnerLeft === "string" ? state.runnerLeft : "28%";
+        state.runnerTop = typeof state.runnerTop === "string" ? state.runnerTop : "0px";
+      }
+
+      function save() {
+        normalizeState();
+        safeStorage(storage => storage.setItem(STORAGE_KEY, JSON.stringify(state)));
+      }
+
+      function load() {
+        const saved = safeStorage(storage => storage.getItem(STORAGE_KEY), null);
+        if (!saved) return;
+        try {
+          const parsed = JSON.parse(saved);
+          if (parsed && typeof parsed === "object") {
+            Object.assign(state, parsed);
+            normalizeState();
+          }
+        } catch (error) {
+          safeStorage(storage => storage.removeItem(STORAGE_KEY));
+        }
+      }
+
+      function cat(size = "cat") {
+        return `
+          <svg class="${size}" viewBox="0 0 200 200" role="img" aria-label="Cute pink cat">
+            <ellipse cx="100" cy="140" rx="55" ry="45" fill="#f8c0d0"></ellipse>
+            <ellipse cx="100" cy="90" rx="40" ry="35" fill="#f8c0d0"></ellipse>
+            <polygon points="68,65 60,30 85,55" fill="#f8c0d0"></polygon>
+            <polygon points="132,65 140,30 115,55" fill="#f8c0d0"></polygon>
+            <polygon points="68,65 62,35 83,55" fill="#ffb6d3"></polygon>
+            <polygon points="132,65 138,35 117,55" fill="#ffb6d3"></polygon>
+            <ellipse cx="85" cy="85" rx="6" ry="7" fill="#5a2d3a"></ellipse>
+            <ellipse cx="115" cy="85" rx="6" ry="7" fill="#5a2d3a"></ellipse>
+            <ellipse cx="87" cy="83" rx="2" ry="2.5" fill="white"></ellipse>
+            <ellipse cx="117" cy="83" rx="2" ry="2.5" fill="white"></ellipse>
+            <ellipse cx="78" cy="92" rx="6" ry="3" fill="rgba(231,90,151,0.25)"></ellipse>
+            <ellipse cx="122" cy="92" rx="6" ry="3" fill="rgba(231,90,151,0.25)"></ellipse>
+            <ellipse cx="100" cy="97" rx="4" ry="3" fill="#e75a97"></ellipse>
+            <path d="M96 100 Q100 106 104 100" stroke="#5a2d3a" stroke-width="1.5" fill="none" stroke-linecap="round"></path>
+            <path d="M75 95 L55 90M75 98 L55 100M125 95 L145 90M125 98 L145 100" stroke="#d4849e" stroke-width="1.2" stroke-linecap="round"></path>
+            <path d="M140 170 Q150 175 155 165 Q165 140 155 135" stroke="#f8c0d0" stroke-width="8" fill="none" stroke-linecap="round"></path>
+          </svg>
+        `;
+      }
+
+      function escapeHtml(value) {
+        return String(value).replace(/[&<>"']/g, char => ({
+          "&": "&amp;",
+          "<": "&lt;",
+          ">": "&gt;",
+          '"': "&quot;",
+          "'": "&#039;"
+        }[char]));
+      }
+
+      function render() {
+        normalizeState();
+        updateChrome();
+        if (state.page === "splash") return renderSplash();
+        if (state.page === "greeting") return renderGreeting();
+        if (state.page.startsWith("question_")) return renderQuestion(state.page.replace("question_", ""));
+        if (state.page === "gift") return renderGift();
+        if (state.page === "ending") return renderEnding();
+        state.page = "splash";
+        save();
+        return renderSplash();
+      }
+
+      function updateChrome() {
+        const questionId = state.page.startsWith("question_") ? state.page.replace("question_", "") : "";
+        const index = questions.findIndex(q => q.id === questionId);
+        const visible = index >= 0;
+        topbar.classList.toggle("visible", visible);
+        if (visible) {
+          const pct = questions.length > 1 ? Math.round((index / (questions.length - 1)) * 100) : 100;
+          document.getElementById("questionNo").textContent = String(index + 1).padStart(2, "0");
+          document.getElementById("questionTotal").textContent = String(questions.length);
+          document.getElementById("percent").textContent = pct + "%";
+          document.getElementById("barFill").style.width = pct + "%";
+        }
+      }
+
+      function renderSplash() {
+        screen.innerHTML = `
+          <div class="clock" id="clock">Princess 🌸</div>
+          ${cat()}
+          <section class="card">
+            <h1>For My Princess 💖</h1>
+            <p class="sub">A little interactive love card made with all my love...</p>
+            <p class="copy">Every page brings you closer to my heart ✉️</p>
+            <button class="btn" id="start" type="button" aria-label="Start the romantic website and play music">Yes, I'm Ready 💌</button>
+          </section>
+        `;
+        document.getElementById("start").onclick = () => {
+          state.musicOn = true;
+          playMusic();
+          state.page = "greeting";
+          save();
+          render();
+        };
+        tickClock();
+      }
+
+      function tickClock() {
+        const node = document.getElementById("clock");
+        if (!node) return;
+        const now = new Date();
+        node.textContent = now.toLocaleDateString("en-IN", {
+          weekday: "short",
+          month: "short",
+          day: "numeric",
+          year: "numeric"
+        }) + " | " + now.toLocaleTimeString("en-IN");
+      }
+
+      setInterval(tickClock, 1000);
+
+      function renderGreeting() {
+        screen.innerHTML = `
+          <section class="card">
+            ${cat("cat small-cat")}
+            <h2>Hey, Princess 👑</h2>
+            <p class="sub">How's my baby doing today?</p>
+            ${
+              state.answers.greeting
+                ? `<p class="copy">Aww! Whatever your mood, I'm always here for you my jaan 💖</p>
+                   <button class="btn" id="next" type="button">Chalein aage? 💌</button>`
+                : `<div class="stack">
+                    <button class="btn" id="fine" type="button">Haan baby, I'm fine 😊</button>
+                    <div class="runner-wrap">
+                      <button class="btn ghost-btn runner" id="runner" type="button" style="left:${state.runnerLeft}; top:${state.runnerTop}">Nahi baat nahi karungi 😡</button>
+                    </div>
+                  </div>`
+            }
+          </section>
+        `;
+        const fine = document.getElementById("fine");
+        const runner = document.getElementById("runner");
+        const next = document.getElementById("next");
+        if (fine) {
+          fine.onclick = () => {
+            state.answers.greeting = "Haan baby I am fine";
+            save();
+            render();
+          };
+        }
+        if (runner) {
+          const dodge = () => {
+            state.runnerLeft = Math.floor(Math.random() * 42 + 6) + "%";
+            state.runnerTop = Math.floor(Math.random() * 28 - 4) + "px";
+            runner.style.left = state.runnerLeft;
+            runner.style.top = state.runnerTop;
+          };
+          runner.onmouseenter = dodge;
+          runner.ontouchstart = dodge;
+          runner.onclick = dodge;
+        }
+        if (next) {
+          next.onclick = () => goToQuestion(0);
+        }
+      }
+
+      function renderQuestion(id) {
+        const index = questions.findIndex(q => q.id === id);
+        const q = questions[index];
+        if (!q) return goToQuestion(0);
+
+        if (q.type === "appreciation") {
+          screen.innerHTML = `
+            <section class="card">
+              ${cat("cat small-cat")}
+              <h2>${q.title}</h2>
+              <p class="sub">${q.subText}</p>
+              <div class="appreciation">
+                <p>You are my absolute favorite person, my dream come true, and the most precious gift in my life. Every single heartbeat of mine belongs only to you. 💖</p>
+                <p>You make my world incredibly beautiful just by being in it. I am forever deeply in love with you, my princess! ✨🌸</p>
+              </div>
+              <button class="btn" id="continue" type="button">Continue 💌</button>
+            </section>
+          `;
+          document.getElementById("continue").onclick = () => nextQuestion(index, "appreciation_read");
+          return;
+        }
+
+        if (q.type === "letter") {
+          const paragraphs = [
+            "Sorry for yesterday and for the day when I wasn't able to give you enough attention.",
+            "I really love you so much.",
+            "Because of some reasons, I wasn't available the way I wanted to be.",
+            "I'm truly sorry for making you feel ignored.",
+            "I'm still learning every day to become the best person I can be for you.",
+            "Please forgive me.",
+            "Trust me, I'll always keep improving myself for us.",
+            "I would never hurt you intentionally.",
+            "It was a mistake, and I'm genuinely sorry.",
+            "I love you more than words can ever explain. ❤️🌸"
+          ];
+          screen.innerHTML = `
+            <section class="card">
+              ${cat("cat small-cat")}
+              <h2>${q.title}</h2>
+              <p class="sub">${q.subText}</p>
+              <div class="letter">
+                <p style="color: var(--blush); font-weight: 700">Dear Princess,</p>
+                ${paragraphs.map(p => `<p>${p}</p>`).join("")}
+                <p style="text-align:right; color: var(--blush); font-style: italic">Forever Yours,<br />Your Bhavish 💖</p>
+              </div>
+              <button class="btn btn-pink" id="forgive" type="button">I Forgive You 💖</button>
+            </section>
+          `;
+          document.getElementById("forgive").onclick = () => nextQuestion(index, "apology_forgiven");
+          return;
+        }
+
+        const current = state.answers[q.id] || "";
+        const field = q.type === "input"
+          ? `<input id="answer" aria-label="${escapeHtml(q.title)}" value="${escapeHtml(current)}" placeholder="${escapeHtml(q.placeholder || "")}" />`
+          : `<textarea id="answer" aria-label="${escapeHtml(q.title)}" placeholder="${escapeHtml(q.placeholder || "")}">${escapeHtml(current)}</textarea>`;
+
+        screen.innerHTML = `
+          <section class="card">
+            ${cat("cat small-cat")}
+            <h2>${q.title}</h2>
+            <p class="sub">${q.subText}</p>
+            <div class="stack">
+              ${field}
+              <button class="btn" id="next" type="button" ${current.trim() ? "" : "disabled"}>Next 💌</button>
+            </div>
+          </section>
+        `;
+        const answer = document.getElementById("answer");
+        const next = document.getElementById("next");
+        if (answer) answer.focus();
+        if (answer && next) {
+          answer.oninput = () => {
+            state.answers[q.id] = answer.value;
+            next.disabled = !answer.value.trim();
+            if (Math.random() > 0.66) sparkle(answer);
+            save();
+          };
+          next.onclick = () => nextQuestion(index, answer.value);
+        }
+      }
+
+      function nextQuestion(index, value) {
+        state.answers[questions[index].id] = value;
+        save();
+        const next = index + 1;
+        showSweet(() => {
+          if (next < questions.length) goToQuestion(next);
+          else {
+            state.page = "gift";
+            save();
+            render();
+          }
+        });
+      }
+
+      function goToQuestion(index) {
+        state.page = "question_" + questions[index].id;
+        save();
+        render();
+      }
+
+      function buildLoveResponsePayload() {
+        const subject = "Someone answered your love website! 💖👑";
+        const body = [
+          subject,
+          "",
+          "Greeting Choice: " + (state.answers.greeting || ""),
+          "Q1: " + (state.answers.q1 || ""),
+          "Q2: " + (state.answers.q2 || ""),
+          "Q3: " + (state.answers.q3 || ""),
+          "Q5: " + (state.answers.q5 || ""),
+          "Romantic Q1 - Afraid of losing me: " + (state.answers.rq1 || ""),
+          "Romantic Q2 - What scares you / change or improve: " + (state.answers.rq2 || ""),
+          "Romantic Q3 - Loved, safe, and happy: " + (state.answers.rq3 || ""),
+          "Romantic Q4 - Loving you the way you want: " + (state.answers.rq4 || ""),
+          "Romantic Q5 - Sorry / anger / scared: " + (state.answers.rq5 || ""),
+          "Romantic Q6 - Always love you: " + (state.answers.rq6 || ""),
+          "Gift Q1: " + (state.answers.gq1 || ""),
+          "Gift Q2: " + (state.answers.gq2 || ""),
+          "Heart Rating: " + (state.rating || 0) + " / 5",
+          "Review: " + (state.review || "")
+        ].join("\n");
+
+        return {
+          ownerEmail: OWNER_EMAIL,
+          subject,
+          body,
+          greeting: state.answers.greeting || "",
+          q1: state.answers.q1 || "",
+          q2: state.answers.q2 || "",
+          q3: state.answers.q3 || "",
+          q5: state.answers.q5 || "",
+          romanticQ1: state.answers.rq1 || "",
+          romanticQ2: state.answers.rq2 || "",
+          romanticQ3: state.answers.rq3 || "",
+          romanticQ4: state.answers.rq4 || "",
+          romanticQ5: state.answers.rq5 || "",
+          romanticQ6: state.answers.rq6 || "",
+          giftQ1: state.answers.gq1 || "",
+          giftQ2: state.answers.gq2 || "",
+          rating: state.rating || 0,
+          review: state.review || ""
+        };
+      }
+
+      function isEmailJsConfigured() {
+        return Boolean(
+          window.emailjs &&
+          EMAILJS_CONFIG.publicKey &&
+          EMAILJS_CONFIG.serviceId &&
+          EMAILJS_CONFIG.templateId
+        );
+      }
+
+      async function submitLoveResponse() {
+        const payload = buildLoveResponsePayload();
+
+        if (isEmailJsConfigured()) {
+          await window.emailjs.init({ publicKey: EMAILJS_CONFIG.publicKey });
+          await window.emailjs.send(
+            EMAILJS_CONFIG.serviceId,
+            EMAILJS_CONFIG.templateId,
+            payload
+          );
+          return true;
+        }
+
+        const mailtoUrl = "mailto:" + encodeURIComponent(payload.ownerEmail) +
+          "?subject=" + encodeURIComponent(payload.subject) +
+          "&body=" + encodeURIComponent(payload.body);
+        location.href = mailtoUrl;
+        return true;
+      }
+
+      function renderGift() {
+        screen.innerHTML = `
+          <section class="card">
+            ${cat("cat small-cat")}
+            <h2>A Special Gift 🎁</h2>
+            ${
+              state.giftOpen
+                ? `<div class="poem">
+                    <p>"Meri Ankhon ke samne tera Chehra ho,"</p>
+                    <p>"Tere Chehre Par Mera Pehara Ho,"</p>
+                    <p>"Tujhe Mujhse Ishq ho Kudha kare,"</p>
+                    <p style="color: var(--blush); font-weight: 700">"YEH ISHQ SAMANDAR SE BHE GEHRA HO."</p>
+                  </div>
+                  <p class="copy">Thank you for being mine 🌸💖</p>
+                  <p class="sub">Rate our love journey</p>
+                  <div class="stars" role="radiogroup" aria-label="Rate our love journey">${[1,2,3,4,5].map(n => `<button class="heart-rate" type="button" data-rate="${n}" role="radio" aria-checked="${state.rating === n}" aria-label="${n} out of 5">${state.rating >= n ? "💖" : "🖤"}</button>`).join("")}</div>
+                  <textarea id="review" aria-label="Write something sweet for Bhavish" placeholder="Dil ki baatein likh do...">${escapeHtml(state.review || "")}</textarea>
+                  <button class="btn" id="send" type="button" style="margin-top:16px" ${state.rating && state.review.trim().length > 2 ? "" : "disabled"}>Send Everything to Bhavish 💌</button>`
+                : `<p class="sub">Tap the glowing gift box to unbox it! 💖</p>
+                  <div class="gift" id="giftBox" role="button" tabindex="0" aria-label="Open the special gift">${giftSvg()}</div>
+                  <p class="copy">Made with all my heart just for you 🌸</p>`
+            }
+          </section>
+        `;
+
+        const giftBox = document.getElementById("giftBox");
+        if (giftBox) {
+          const openGift = () => {
+            state.giftOpen = true;
+            save();
+            burst();
+            renderGift();
+          };
+          giftBox.onclick = openGift;
+          giftBox.onkeydown = event => {
+            if (event.key === "Enter" || event.key === " ") {
+              event.preventDefault();
+              openGift();
+            }
+          };
+        }
+
+        document.querySelectorAll("[data-rate]").forEach(btn => {
+          btn.onclick = () => {
+            state.rating = Number(btn.dataset.rate);
+            save();
+            renderGift();
+          };
+        });
+
+        const review = document.getElementById("review");
+        const send = document.getElementById("send");
+        if (review && send) {
+          review.oninput = () => {
+            state.review = review.value;
+            send.disabled = !(state.rating && state.review.trim().length > 2);
+            save();
+          };
+          send.onclick = async () => {
+            send.disabled = true;
+            try {
+              await submitLoveResponse();
+              state.page = "ending";
+              save();
+              setTimeout(render, 450);
+            } catch (error) {
+              send.disabled = false;
+            }
+          };
+        }
+      }
+
+      function giftSvg() {
+        return `
+          <svg viewBox="0 0 120 120" style="width:140px;height:140px" aria-label="Gift box">
+            <rect x="15" y="45" width="90" height="65" rx="8" fill="#e01e5a" stroke="#fff" stroke-width="2.5"></rect>
+            <rect x="10" y="32" width="100" height="20" rx="5" fill="#fff"></rect>
+            <rect x="51" y="32" width="18" height="78" fill="#ffb6d3" opacity="0.6"></rect>
+            <path d="M60 32C60 16 43 5 38 10S33 32 60 32" fill="#fff"></path>
+            <path d="M60 32C60 16 77 5 82 10S87 32 60 32" fill="#e01e5a"></path>
+          </svg>
+        `;
+      }
+
+      function renderEnding() {
+        burst();
+        screen.innerHTML = `
+          <section class="card">
+            <div style="font-size:54px; margin-bottom: 16px">💖</div>
+            <h2>Thank you, Princess 💖</h2>
+            <p class="copy">For spending your precious time with me...</p>
+            <p class="sub">Until our next little adventure...</p>
+            <button class="btn ghost-btn" id="reset" type="button">Start Over 🌸</button>
+          </section>
+        `;
+        document.getElementById("reset").onclick = () => {
+          safeStorage(storage => storage.removeItem(STORAGE_KEY));
+          Object.assign(state, {
+            page: "splash",
+            answers: {},
+            sweetIndex: 0,
+            rating: 0,
+            review: "",
+            giftOpen: false,
+            runnerLeft: "28%",
+            runnerTop: "0px"
+          });
+          render();
+        };
+      }
+
+      function showSweet(done) {
+        const transition = document.getElementById("transition");
+        const text = document.getElementById("sweetText");
+        text.textContent = sweetLines[state.sweetIndex % sweetLines.length];
+        state.sweetIndex += 1;
+        transition.classList.add("visible");
+        burst(18);
+        setTimeout(() => {
+          transition.classList.remove("visible");
+          save();
+          done();
+        }, 2200);
+      }
+
+      function sparkle(element) {
+        if (!element || typeof element.getBoundingClientRect !== "function") return;
+        const rect = element.getBoundingClientRect();
+        const x = rect.left + Math.random() * rect.width;
+        const y = rect.top + 20 + Math.random() * 40;
+        floatHeart(x, y, ["💖", "💕", "✨", "🌸"][Math.floor(Math.random() * 4)]);
+      }
+
+      function floatHeart(x, y, char) {
+        const node = document.createElement("div");
+        node.className = "float-heart";
+        node.textContent = char || "💖";
+        node.style.left = x + "px";
+        node.style.top = y + "px";
+        document.body.appendChild(node);
+        setTimeout(() => node.remove(), 1200);
+      }
+
+      function burst(count = 34) {
+        for (let i = 0; i < count; i++) {
+          setTimeout(() => {
+            floatHeart(
+              window.innerWidth / 2 + (Math.random() * 320 - 160),
+              window.innerHeight / 2 + (Math.random() * 240 - 120),
+              ["💖", "💕", "💝", "🌸", "✨", "👑"][Math.floor(Math.random() * 6)]
+            );
+          }, i * 22);
+        }
+      }
+
+      function initSparkleCursorTrail() {
+        const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
+        if (reducedMotion.matches) return;
+
+        const colors = [
+          "rgba(255, 240, 243, 0.9)",
+          "rgba(255, 179, 193, 0.82)",
+          "rgba(255, 133, 161, 0.78)",
+          "rgba(244, 199, 255, 0.72)",
+          "rgba(255, 214, 190, 0.74)"
+        ];
+        const glowColors = [
+          "rgba(255, 255, 255, 0.34)",
+          "rgba(255, 133, 161, 0.42)",
+          "rgba(255, 198, 224, 0.38)",
+          "rgba(223, 184, 255, 0.34)"
+        ];
+        const symbols = ["✦", "✧", "✨", "♥"];
+        const active = new Set();
+        let lastCreatedAt = 0;
+        let lastX = -9999;
+        let lastY = -9999;
+
+        const removeParticle = particle => {
+          active.delete(particle);
+          particle.remove();
+        };
+
+        const spawnLoveDust = (x, y, isTouch = false) => {
+          if (reducedMotion.matches) return;
+
+          const now = performance.now();
+          const minDelay = isTouch ? 90 : 38;
+          const dx = x - lastX;
+          const dy = y - lastY;
+
+          if (now - lastCreatedAt < minDelay) return;
+          if (Math.hypot(dx, dy) < (isTouch ? 18 : 10)) return;
+
+          lastCreatedAt = now;
+          lastX = x;
+          lastY = y;
+
+          if (active.size >= 42) {
+            const oldest = active.values().next().value;
+            if (oldest) removeParticle(oldest);
+          }
+
+          const typeRoll = Math.random();
+          const type = typeRoll < 0.58 ? "dot" : typeRoll < 0.9 ? "star" : "heart";
+          const particle = document.createElement("span");
+          particle.className = "cursor-sparkle " + type;
+
+          if (type !== "dot") {
+            particle.textContent = type === "heart" ? "♥" : symbols[Math.floor(Math.random() * symbols.length)];
+          }
+
+          const size = type === "dot"
+            ? Math.random() * 4 + 3
+            : type === "heart"
+              ? Math.random() * 5 + 7
+              : Math.random() * 6 + 6;
+          const color = colors[Math.floor(Math.random() * colors.length)];
+          const glow = glowColors[Math.floor(Math.random() * glowColors.length)];
+          const offsetX = Math.random() * 14 - 7;
+          const offsetY = Math.random() * 12 - 6;
+          const driftX = Math.random() * 22 - 11;
+          const driftY = -(Math.random() * 34 + 20);
+          const rotation = Math.random() * 120 - 60;
+          const spin = Math.random() * 80 - 40;
+          const duration = Math.random() * 260 + (isTouch ? 760 : 680);
+          const opacity = Math.random() * 0.26 + 0.56;
+
+          particle.style.setProperty("--sparkle-x", `${x + offsetX}px`);
+          particle.style.setProperty("--sparkle-y", `${y + offsetY}px`);
+          particle.style.setProperty("--sparkle-size", `${size}px`);
+          particle.style.setProperty("--sparkle-color", color);
+          particle.style.setProperty("--sparkle-glow", glow);
+          particle.style.setProperty("--sparkle-drift-x", `${driftX}px`);
+          particle.style.setProperty("--sparkle-drift-y", `${driftY}px`);
+          particle.style.setProperty("--sparkle-rotation", `${rotation}deg`);
+          particle.style.setProperty("--sparkle-spin", `${spin}deg`);
+          particle.style.setProperty("--sparkle-duration", `${duration}ms`);
+          particle.style.setProperty("--sparkle-opacity", opacity.toFixed(2));
+
+          active.add(particle);
+          document.body.appendChild(particle);
+
+          particle.addEventListener("animationend", () => removeParticle(particle), { once: true });
+          setTimeout(() => removeParticle(particle), duration + 120);
+        };
+
+        window.addEventListener("mousemove", event => {
+          spawnLoveDust(event.clientX, event.clientY, false);
+        }, { passive: true });
+
+        window.addEventListener("touchmove", event => {
+          const touch = event.touches && event.touches[0];
+          if (touch) spawnLoveDust(touch.clientX, touch.clientY, true);
+        }, { passive: true });
+      }
+
+      async function playMusic() {
+        if (!bgm || !setAudioSource(state.audioIndex || 0)) {
+          state.musicOn = false;
+          save();
+          setMusicButton(false, "🔇 Music Unavailable");
+          return false;
+        }
+
+        try {
+          bgm.volume = 0.16;
+          await bgm.play();
+          state.musicOn = true;
+          save();
+          setMusicButton(true);
+          return true;
+        } catch (error) {
+          state.musicOn = false;
+          save();
+          setMusicButton(false);
+          return false;
+        }
+      }
+
+      function pauseMusic() {
+        if (bgm) bgm.pause();
+        state.musicOn = false;
+        save();
+        setMusicButton(false);
+      }
+
+      if (bgm) {
+        bgm.addEventListener("error", handleAudioMissing);
+      }
+
+      musicBtn.onclick = () => (state.musicOn && bgm && !bgm.paused) ? pauseMusic() : playMusic();
+
+      function createPetals() {
+        const host = document.getElementById("petals");
+        host.innerHTML = "";
+        for (let i = 0; i < 18; i++) {
+          const petal = document.createElement("span");
+          petal.className = "petal";
+          petal.style.setProperty("--left", Math.random() * 100 + "vw");
+          petal.style.setProperty("--size", Math.random() * 10 + 8 + "px");
+          petal.style.setProperty("--duration", Math.random() * 7 + 9 + "s");
+          petal.style.setProperty("--delay", Math.random() * 9 + "s");
+          host.appendChild(petal);
+        }
+      }
+
+      load();
+      setAudioSource(state.audioIndex || 0);
+      createPetals();
+      initSparkleCursorTrail();
+      if (bgm && bgm.paused) state.musicOn = false;
+      setMusicButton(state.musicOn);
+      render();
+    </script>
+  </body>
+</html>

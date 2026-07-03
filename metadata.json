@@ -1,0 +1,6 @@
+{
+  "name": "For My Princess Nikita",
+  "description": "An interactive, premium romantic journey of memories, apologies, and sweet surprises.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

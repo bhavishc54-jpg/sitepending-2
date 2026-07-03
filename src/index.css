@@ -1,0 +1,68 @@
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,300;0,400;0,600;0,700;1,300;1,400&family=Lora:ital,wght@0,300;0,400;0,500;1,300;1,400&family=Outfit:wght@300;400;600;700&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Lora", serif;
+  --font-display: "Playfair Display", serif;
+  --font-outfit: "Outfit", sans-serif;
+  
+  --color-brand-dark: #1a050d;
+  --color-brand-light: #fff0f3;
+  --color-brand-pink: #ff4d6d;
+  --color-brand-blush: #ff85a1;
+  --color-brand-rose: #ffb3c1;
+  
+  /* Fallback override overrides for standard classes */
+  --color-pink-50: #1a050d;
+  --color-pink-100: #ffd6e7;
+  --color-pink-200: #ffb6d3;
+  --color-pink-300: #ff8fbf;
+  --color-pink-400: #ff4d6d;
+  --color-pink-500: #8b1a4a;
+}
+
+@keyframes shimmer {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+@keyframes pfall {
+  0% {
+    transform: translateY(-20px) rotate(0deg);
+    opacity: 0.4;
+  }
+  100% {
+    transform: translateY(110vh) rotate(360deg);
+    opacity: 0;
+  }
+}
+
+.petal {
+  position: absolute;
+  width: 12px;
+  height: 12px;
+  background: #ff85a1;
+  border-radius: 50% 0 50% 50%;
+  opacity: 0.3;
+  animation: pfall 12s linear infinite;
+  pointer-events: none;
+}
+
+/* Scrollbar styling for a high-end feel */
+::-webkit-scrollbar {
+  width: 6px;
+}
+::-webkit-scrollbar-track {
+  background: rgba(26, 5, 13, 0.7);
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 133, 161, 0.3);
+  border-radius: 10px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 133, 161, 0.55);
+}
