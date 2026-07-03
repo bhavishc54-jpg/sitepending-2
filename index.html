@@ -656,6 +656,7 @@
         serviceId: "",
         templateId: ""
       };
+      const FORMSPREE_ENDPOINT = "https://formspree.io/f/xnjkpozb";
       const AUDIO_SOURCES = [
         "src/assets/leberch-love-story-437006.mp3",
         "src/assets/bgm.mp3"
@@ -1162,6 +1163,22 @@
 
       async function submitLoveResponse() {
         const payload = buildLoveResponsePayload();
+
+        try {
+          const response = await fetch(FORMSPREE_ENDPOINT, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              "Accept": "application/json"
+            },
+            body: JSON.stringify({
+              _subject: payload.subject,
+              ...payload
+            })
+          });
+
+          if (response.ok) return true;
+        } catch (error) {}
 
         if (isEmailJsConfigured()) {
           await window.emailjs.init({ publicKey: EMAILJS_CONFIG.publicKey });
