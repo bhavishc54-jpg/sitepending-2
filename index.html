@@ -198,6 +198,25 @@
         backdrop-filter: blur(12px);
       }
 
+      .music-error {
+        display: none;
+        margin: 18px auto 0;
+        max-width: 420px;
+        border: 1px solid rgba(255, 133, 161, 0.28);
+        border-radius: 16px;
+        background: rgba(255, 77, 109, 0.1);
+        color: rgba(255, 240, 243, 0.9);
+        padding: 12px 14px;
+        font-family: "Trebuchet MS", sans-serif;
+        font-size: 12px;
+        line-height: 1.45;
+      }
+
+      .backup-music {
+        display: none;
+        margin: 14px auto 0;
+      }
+
       main {
         width: min(100%, 560px);
         margin: auto;
@@ -938,20 +957,43 @@
             <p class="sub">A little interactive love card made with all my love...</p>
             <p class="copy">Every page brings you closer to my heart ✉️</p>
             <button class="btn" id="start" type="button" aria-label="Click to enter and start background music">Click to Enter ❤️</button>
+            <p class="music-error" id="musicError" role="alert" aria-live="polite"></p>
+            <button class="btn backup-music" id="backupMusic" type="button" aria-label="Try playing background music again">Play Music 🎵</button>
           </section>
         `;
-        document.getElementById("start").onclick = async () => {
+        const showMusicFailure = message => {
+          const musicError = document.getElementById("musicError");
+          const backupMusic = document.getElementById("backupMusic");
+          if (musicError) {
+            musicError.textContent = message || "Music could not start. Please tap Play Music 🎵 to try again.";
+            musicError.style.display = "block";
+          }
+          if (backupMusic) backupMusic.style.display = "inline-flex";
+        };
+        const enterAfterMusic = async () => {
           const startButton = document.getElementById("start");
-          startButton.disabled = true;
+          const backupMusic = document.getElementById("backupMusic");
+          if (startButton) startButton.disabled = true;
+          if (backupMusic) backupMusic.disabled = true;
           const musicStarted = await playMusic();
           if (!musicStarted) {
-            startButton.disabled = false;
-            startButton.textContent = "Click to Enter ❤️";
+            if (startButton) {
+              startButton.disabled = false;
+              startButton.textContent = "Click to Enter ❤️";
+            }
+            if (backupMusic) backupMusic.disabled = false;
+            showMusicFailure("Music could not start. Please tap Play Music 🎵 to try again. If it still fails, check /assets/music.mp3 in the browser.");
             return;
           }
           state.page = "greeting";
           save();
           render();
+        };
+        document.getElementById("start").onclick = async () => {
+          await enterAfterMusic();
+        };
+        document.getElementById("backupMusic").onclick = async () => {
+          await enterAfterMusic();
         };
         tickClock();
       }
@@ -1472,7 +1514,7 @@
         }
 
         try {
-          bgm.volume = 0.16;
+          bgm.volume = 0.6;
           bgm.loop = true;
           await bgm.play();
           state.musicOn = true;
