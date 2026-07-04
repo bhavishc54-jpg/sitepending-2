@@ -9,7 +9,9 @@ interface LoveHeaderProps {
 }
 
 export function LoveHeader({ currentQuestion, totalQuestions, isGlowing, isPulsing }: LoveHeaderProps) {
-  const percentage = Math.round(((currentQuestion - 1) / totalQuestions) * 100);
+  const safeTotal = Math.max(totalQuestions, 1);
+  const safeCurrent = Math.min(Math.max(currentQuestion, 0), safeTotal);
+  const percentage = Math.round((safeCurrent / safeTotal) * 100);
   const [displayedPct, setDisplayedPct] = useState(0);
   const [headerHearts, setHeaderHearts] = useState<{ id: number; x: number; y: number; delay: number }[]>([]);
   const [headerSparkles, setHeaderSparkles] = useState<{ id: number; x: number; y: number }[]>([]);
