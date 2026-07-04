@@ -615,7 +615,7 @@
     </style>
   </head>
   <body>
-    <audio id="bgm" src="src/assets/leberch-love-story-437006.mp3" loop preload="auto"></audio>
+    <audio id="bgm" src="assets/music.mp3" loop preload="auto"></audio>
     <div class="grain"></div>
     <div id="petals"></div>
     <div class="topbar" id="topbar">
@@ -658,8 +658,7 @@
       };
       const FORMSPREE_ENDPOINT = "https://formspree.io/f/xnjkpozb";
       const AUDIO_SOURCES = [
-        "src/assets/leberch-love-story-437006.mp3",
-        "src/assets/bgm.mp3"
+        "assets/music.mp3"
       ];
       const STORAGE_KEY = "nikita-love-static";
 
@@ -814,6 +813,10 @@
 
       function handleAudioMissing() {
         if (!bgm) return;
+        console.error("[Music] Background music file could not be loaded.", {
+          attemptedSource: bgm.currentSrc || bgm.getAttribute("src"),
+          expectedPath: "assets/music.mp3"
+        });
         const nextIndex = state.audioIndex + 1;
         if (nextIndex < AUDIO_SOURCES.length) {
           setAudioSource(nextIndex);
@@ -934,12 +937,18 @@
             <h1>For My Princess 💖</h1>
             <p class="sub">A little interactive love card made with all my love...</p>
             <p class="copy">Every page brings you closer to my heart ✉️</p>
-            <button class="btn" id="start" type="button" aria-label="Start the romantic website and play music">Yes, I'm Ready 💌</button>
+            <button class="btn" id="start" type="button" aria-label="Click to enter and start background music">Click to Enter ❤️</button>
           </section>
         `;
-        document.getElementById("start").onclick = () => {
-          state.musicOn = true;
-          playMusic();
+        document.getElementById("start").onclick = async () => {
+          const startButton = document.getElementById("start");
+          startButton.disabled = true;
+          const musicStarted = await playMusic();
+          if (!musicStarted) {
+            startButton.disabled = false;
+            startButton.textContent = "Click to Enter ❤️";
+            return;
+          }
           state.page = "greeting";
           save();
           render();
@@ -1464,12 +1473,18 @@
 
         try {
           bgm.volume = 0.16;
+          bgm.loop = true;
           await bgm.play();
           state.musicOn = true;
           save();
           setMusicButton(true);
           return true;
         } catch (error) {
+          console.error("[Music] Browser refused or failed to play background music.", {
+            attemptedSource: bgm.currentSrc || bgm.getAttribute("src"),
+            expectedPath: "assets/music.mp3",
+            error
+          });
           state.musicOn = false;
           save();
           setMusicButton(false);
