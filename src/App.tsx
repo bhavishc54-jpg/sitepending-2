@@ -4,12 +4,16 @@ import { LoveHeader } from './components/LoveHeader';
 import { BackgroundHearts } from './components/BackgroundHearts';
 import { HeartRain } from './components/HeartRain';
 import { RomanticParticleCanvas, useRomanticTyping } from './components/CaretParticles';
+import { SUPABASE_PUBLISHABLE_KEY, SUPABASE_URL } from './config/supabase';
 
 const FORM_ENDPOINT = 'https://formspree.io/f/xnjkpozb';
 const MUSIC_SRC = '/assets/music.mp3';
 const REQUIRED_CLICKS = 3;
+const AUTH_STORAGE_KEY = 'nikita-supabase-session';
 
 type StepKind = 'choice' | 'textarea';
+type AuthMode = 'login' | 'signup';
+type AuthStatus = 'idle' | 'loading';
 
 interface RomanticStep {
   id: string;
@@ -18,6 +22,18 @@ interface RomanticStep {
   note: string;
   placeholder?: string;
   actionLabel: string;
+}
+
+interface SignupForm {
+  name: string;
+  email: string;
+  phone: string;
+  password: string;
+}
+
+interface LoginForm {
+  email: string;
+  password: string;
 }
 
 const STEPS: RomanticStep[] = [
@@ -77,10 +93,48 @@ function randomNoPosition() {
   };
 }
 
+async function supabaseAuthRequest(path: string, body: Record<string, unknown>) {
+  const response = await fetch(`${SUPABASE_URL}/auth/v1/${path}`, {
+    method: 'POST',
+    headers: {
+      apikey: SUPABASE_PUBLISHABLE_KEY,
+      Authorization: `Bearer ${SUPABASE_PUBLISHABLE_KEY}`,
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify(body)
+  });
+
+  const data = await response.json().catch(() => ({}));
+
+  if (!response.ok) {
+    const message =
+      data?.msg ||
+      data?.message ||
+      data?.error_description ||
+      data?.error ||
+      'Something went wrong. Please try again.';
+    throw new Error(message);
+  }
+
+  return data;
+}
+
+function saveAuthSession(session: unknown) {
+  try {
+    window.localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(session));
+  } catch {
+    // Login still succeeds even if browser storage is unavailable.
+  }
+}
+
 export default function App() {
   const savedState = useMemo<Record<string, any>>(() => {
     if (typeof window === 'undefined') return {};
     return safeReadState();
+  }, []);
+  const isDashboardPage = useMemo(() => {
+    if (typeof window === 'undefined') return false;
+    return window.location.pathname.toLowerCase().endsWith('/dashboard.html');
   }, []);
 
   const [stepIndex, setStepIndex] = useState(() => Number(savedState.stepIndex || 0));
@@ -95,6 +149,19 @@ export default function App() {
   const [isPBarGlowing, setIsPBarGlowing] = useState(false);
   const [isPBarPulsing, setIsPBarPulsing] = useState(false);
   const [petals, setPetals] = useState<{ id: number; left: number; delay: number; duration: number; size: number }[]>([]);
+  const [authMode, setAuthMode] = useState<AuthMode>('login');
+  const [authStatus, setAuthStatus] = useState<AuthStatus>('idle');
+  const [authMessage, setAuthMessage] = useState('');
+  const [signupForm, setSignupForm] = useState<SignupForm>({
+    name: '',
+    email: '',
+    phone: '',
+    password: ''
+  });
+  const [loginForm, setLoginForm] = useState<LoginForm>({
+    email: '',
+    password: ''
+  });
   const audioRef = useRef<HTMLAudioElement>(null);
   const typing = useRomanticTyping<HTMLTextAreaElement>();
 
@@ -266,9 +333,251 @@ export default function App() {
     playPrimarySfx();
   };
 
+  const handleSignup = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    setAuthMessage('');
+
+    const name = signupForm.name.trim();
+    const email = signupForm.email.trim();
+    const phone = signupForm.phone.trim();
+
+    if (!name || !email || !phone || !signupForm.password) {
+      setAuthMessage('Please fill in all signup fields.');
+      return;
+    }
+
+    setAuthStatus('loading');
+
+    try {
+      await supabaseAuthRequest('signup', {
+        email,
+        password: signupForm.password,
+        data: {
+          name,
+          phone
+        }
+      });
+
+      setSignupForm({ name: '', email: '', phone: '', password: '' });
+      setAuthMode('login');
+      setAuthMessage('Signup successful. Please login.');
+    } catch (error) {
+      setAuthMessage(error instanceof Error ? error.message : 'Signup failed. Please try again.');
+    } finally {
+      setAuthStatus('idle');
+    }
+  };
+
+  const handleLogin = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    setAuthMessage('');
+
+    const email = loginForm.email.trim();
+
+    if (!email || !loginForm.password) {
+      setAuthMessage('Please enter your email and password.');
+      return;
+    }
+
+    setAuthStatus('loading');
+
+    try {
+      const session = await supabaseAuthRequest('token?grant_type=password', {
+        email,
+        password: loginForm.password
+      });
+      saveAuthSession(session);
+      window.location.href = 'dashboard.html';
+    } catch (error) {
+      setAuthMessage(error instanceof Error ? error.message : 'Login failed. Please try again.');
+      setAuthStatus('idle');
+    }
+  };
+
   const isActionDisabled =
     submitStatus === 'sending' ||
     (currentStep.kind === 'textarea' && !(answers[currentStep.id] || '').trim());
+
+  if (!isDashboardPage) {
+    const isSignup = authMode === 'signup';
+
+    return (
+      <div className="min-h-screen bg-[#1a050d] text-[#fff0f3] selection:bg-pink-400/30 selection:text-white overflow-x-hidden relative font-sans">
+        <BackgroundHearts />
+        <RomanticParticleCanvas />
+
+        <div className="fixed inset-0 pointer-events-none overflow-hidden z-0">
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_20%,rgba(255,77,109,0.16),transparent_34%),linear-gradient(180deg,#1a050d_0%,#2c0b17_48%,#110208_100%)]" />
+          <div className="absolute inset-0 opacity-[0.05] bg-[url('https://www.transparenttextures.com/patterns/stardust.png')]" />
+          {petals.map(p => (
+            <span
+              key={p.id}
+              className="petal"
+              style={{
+                left: `${p.left}%`,
+                animationDelay: `${p.delay}s`,
+                animationDuration: `${p.duration}s`,
+                width: `${p.size}px`,
+                height: `${p.size}px`
+              }}
+            />
+          ))}
+        </div>
+
+        <main className="relative z-10 min-h-screen w-full max-w-xl mx-auto px-4 py-16 flex items-center justify-center">
+          <motion.section
+            className="w-full rounded-2xl bg-white/5 backdrop-blur-xl border border-white/10 p-6 sm:p-8 shadow-[0_15px_45px_rgba(0,0,0,0.5)] text-center relative overflow-hidden"
+            initial={{ opacity: 0, y: 18, scale: 0.98 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            transition={{ duration: 0.45, ease: 'easeOut' }}
+          >
+            <div className="absolute inset-0 pointer-events-none bg-[radial-gradient(circle_at_20%_0%,rgba(255,133,161,0.16),transparent_28%),radial-gradient(circle_at_80%_100%,rgba(255,214,231,0.08),transparent_30%)]" />
+
+            <div className="relative">
+              <p className="font-outfit uppercase tracking-[0.32em] text-[10px] text-pink-300/65 font-bold mb-4">
+                Private love space
+              </p>
+              <h1 className="font-display font-light italic text-3xl sm:text-4xl leading-tight tracking-tight mb-4">
+                {isSignup ? 'Create your account' : 'Login to continue'}
+              </h1>
+              <p className="text-sm sm:text-base leading-relaxed text-pink-100/82 max-w-md mx-auto mb-7">
+                {isSignup
+                  ? 'Sign up softly, then login to open the romantic dashboard.'
+                  : 'Enter your email and password to open the dashboard.'}
+              </p>
+
+              <div className="grid grid-cols-2 gap-2 rounded-full border border-white/10 bg-white/5 p-1 mb-6">
+                <button
+                  type="button"
+                  className={`rounded-full px-4 py-2 text-xs font-outfit font-bold uppercase tracking-[0.18em] transition-colors ${
+                    !isSignup ? 'bg-white text-[#1a050d]' : 'text-pink-100 hover:bg-white/10'
+                  }`}
+                  aria-pressed={!isSignup}
+                  onClick={() => {
+                    setAuthMode('login');
+                    setAuthMessage('');
+                  }}
+                >
+                  Login
+                </button>
+                <button
+                  type="button"
+                  className={`rounded-full px-4 py-2 text-xs font-outfit font-bold uppercase tracking-[0.18em] transition-colors ${
+                    isSignup ? 'bg-white text-[#1a050d]' : 'text-pink-100 hover:bg-white/10'
+                  }`}
+                  aria-pressed={isSignup}
+                  onClick={() => {
+                    setAuthMode('signup');
+                    setAuthMessage('');
+                  }}
+                >
+                  Signup
+                </button>
+              </div>
+
+              {isSignup ? (
+                <form className="grid gap-4 text-left" onSubmit={handleSignup}>
+                  <label className="grid gap-2 text-xs font-outfit font-bold uppercase tracking-[0.18em] text-pink-200/75">
+                    Name
+                    <input
+                      className="w-full p-4 bg-white/5 border border-white/10 text-[#fff0f3] text-sm font-sans normal-case tracking-normal focus:bg-white/10 outline-none transition-all duration-300 rounded-xl placeholder:text-white/25 focus:border-pink-300 focus:ring-2 focus:ring-pink-300/25"
+                      type="text"
+                      autoComplete="name"
+                      value={signupForm.name}
+                      onChange={event => setSignupForm(prev => ({ ...prev, name: event.target.value }))}
+                      required
+                    />
+                  </label>
+                  <label className="grid gap-2 text-xs font-outfit font-bold uppercase tracking-[0.18em] text-pink-200/75">
+                    Email
+                    <input
+                      className="w-full p-4 bg-white/5 border border-white/10 text-[#fff0f3] text-sm font-sans normal-case tracking-normal focus:bg-white/10 outline-none transition-all duration-300 rounded-xl placeholder:text-white/25 focus:border-pink-300 focus:ring-2 focus:ring-pink-300/25"
+                      type="email"
+                      autoComplete="email"
+                      value={signupForm.email}
+                      onChange={event => setSignupForm(prev => ({ ...prev, email: event.target.value }))}
+                      required
+                    />
+                  </label>
+                  <label className="grid gap-2 text-xs font-outfit font-bold uppercase tracking-[0.18em] text-pink-200/75">
+                    Phone
+                    <input
+                      className="w-full p-4 bg-white/5 border border-white/10 text-[#fff0f3] text-sm font-sans normal-case tracking-normal focus:bg-white/10 outline-none transition-all duration-300 rounded-xl placeholder:text-white/25 focus:border-pink-300 focus:ring-2 focus:ring-pink-300/25"
+                      type="tel"
+                      autoComplete="tel"
+                      value={signupForm.phone}
+                      onChange={event => setSignupForm(prev => ({ ...prev, phone: event.target.value }))}
+                      required
+                    />
+                  </label>
+                  <label className="grid gap-2 text-xs font-outfit font-bold uppercase tracking-[0.18em] text-pink-200/75">
+                    Password
+                    <input
+                      className="w-full p-4 bg-white/5 border border-white/10 text-[#fff0f3] text-sm font-sans normal-case tracking-normal focus:bg-white/10 outline-none transition-all duration-300 rounded-xl placeholder:text-white/25 focus:border-pink-300 focus:ring-2 focus:ring-pink-300/25"
+                      type="password"
+                      autoComplete="new-password"
+                      value={signupForm.password}
+                      onChange={event => setSignupForm(prev => ({ ...prev, password: event.target.value }))}
+                      required
+                    />
+                  </label>
+                  <button
+                    type="submit"
+                    className="w-full mt-2 px-9 py-3.5 bg-white text-[#1a050d] rounded-full text-xs uppercase tracking-[0.2em] font-outfit font-bold shadow-[0_10px_30px_rgba(255,255,255,0.08)] hover:shadow-[0_10px_35px_rgba(255,77,109,0.3)] cursor-pointer disabled:opacity-45 disabled:cursor-not-allowed focus-visible:outline focus-visible:outline-2 focus-visible:outline-pink-200"
+                    disabled={authStatus === 'loading'}
+                  >
+                    {authStatus === 'loading' ? 'Creating...' : 'Create account'}
+                  </button>
+                </form>
+              ) : (
+                <form className="grid gap-4 text-left" onSubmit={handleLogin}>
+                  <label className="grid gap-2 text-xs font-outfit font-bold uppercase tracking-[0.18em] text-pink-200/75">
+                    Email
+                    <input
+                      className="w-full p-4 bg-white/5 border border-white/10 text-[#fff0f3] text-sm font-sans normal-case tracking-normal focus:bg-white/10 outline-none transition-all duration-300 rounded-xl placeholder:text-white/25 focus:border-pink-300 focus:ring-2 focus:ring-pink-300/25"
+                      type="email"
+                      autoComplete="email"
+                      value={loginForm.email}
+                      onChange={event => setLoginForm(prev => ({ ...prev, email: event.target.value }))}
+                      required
+                    />
+                  </label>
+                  <label className="grid gap-2 text-xs font-outfit font-bold uppercase tracking-[0.18em] text-pink-200/75">
+                    Password
+                    <input
+                      className="w-full p-4 bg-white/5 border border-white/10 text-[#fff0f3] text-sm font-sans normal-case tracking-normal focus:bg-white/10 outline-none transition-all duration-300 rounded-xl placeholder:text-white/25 focus:border-pink-300 focus:ring-2 focus:ring-pink-300/25"
+                      type="password"
+                      autoComplete="current-password"
+                      value={loginForm.password}
+                      onChange={event => setLoginForm(prev => ({ ...prev, password: event.target.value }))}
+                      required
+                    />
+                  </label>
+                  <button
+                    type="submit"
+                    className="w-full mt-2 px-9 py-3.5 bg-white text-[#1a050d] rounded-full text-xs uppercase tracking-[0.2em] font-outfit font-bold shadow-[0_10px_30px_rgba(255,255,255,0.08)] hover:shadow-[0_10px_35px_rgba(255,77,109,0.3)] cursor-pointer disabled:opacity-45 disabled:cursor-not-allowed focus-visible:outline focus-visible:outline-2 focus-visible:outline-pink-200"
+                    disabled={authStatus === 'loading'}
+                  >
+                    {authStatus === 'loading' ? 'Logging in...' : 'Login'}
+                  </button>
+                </form>
+              )}
+
+              {authMessage && (
+                <p className="mt-5 rounded-xl border border-pink-200/20 bg-white/5 px-4 py-3 text-center text-sm text-pink-100" role="status" aria-live="polite">
+                  {authMessage}
+                </p>
+              )}
+            </div>
+          </motion.section>
+        </main>
+
+        <footer className="relative z-10 w-full text-center text-[10px] text-pink-300/30 font-sans pb-6 select-none pointer-events-none uppercase tracking-widest font-bold">
+          Copyright © 2026 Bhavish. All Rights Reserved.
+        </footer>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-[#1a050d] text-[#fff0f3] selection:bg-pink-400/30 selection:text-white overflow-x-hidden relative font-sans">
