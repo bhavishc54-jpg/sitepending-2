@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { AnimatePresence, motion } from 'motion/react';
-import { LoveHeader } from './components/LoveHeader';
+import { LoveHeader } from './website/LoveHeader';
 import { BackgroundHearts } from './components/BackgroundHearts';
 import { HeartRain } from './components/HeartRain';
 import { RomanticParticleCanvas, useRomanticTyping } from './components/CaretParticles';
