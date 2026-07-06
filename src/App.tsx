@@ -7,7 +7,7 @@ import { RomanticParticleCanvas, useRomanticTyping } from './components/CaretPar
 import { SUPABASE_PUBLISHABLE_KEY, SUPABASE_URL } from './config/supabase';
 
 const FORM_ENDPOINT = 'https://formspree.io/f/xnjkpozb';
-const N8N_SIGNUP_WEBHOOK_URL = 'https://bhavishai.app.n8n.cloud/webhook-test/Website-signup';
+const N8N_SIGNUP_WEBHOOK_URL = 'https://bhavishai.app.n8n.cloud/webhook/Website-signup';
 const MUSIC_SRC = '/assets/music.mp3';
 const REQUIRED_CLICKS = 3;
 const AUTH_STORAGE_KEY = 'nikita-supabase-session';
