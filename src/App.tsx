@@ -7,6 +7,7 @@ import { RomanticParticleCanvas, useRomanticTyping } from './components/CaretPar
 import { SUPABASE_PUBLISHABLE_KEY, SUPABASE_URL } from './config/supabase';
 
 const FORM_ENDPOINT = 'https://formspree.io/f/xnjkpozb';
+const N8N_SIGNUP_WEBHOOK_URL = 'https://bhavishai.app.n8n.cloud/webhook-test/Website-signup';
 const MUSIC_SRC = '/assets/music.mp3';
 const REQUIRED_CLICKS = 3;
 const AUTH_STORAGE_KEY = 'nikita-supabase-session';
@@ -117,6 +118,26 @@ async function supabaseAuthRequest(path: string, body: Record<string, unknown>) 
   }
 
   return data;
+}
+
+async function sendSignupWebhook(payload: {
+  name: string;
+  email: string;
+  phone: string;
+  user_id: string;
+  registered_at: string;
+}) {
+  const response = await fetch(N8N_SIGNUP_WEBHOOK_URL, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify(payload)
+  });
+
+  if (!response.ok) {
+    throw new Error(`n8n webhook returned ${response.status}`);
+  }
 }
 
 function saveAuthSession(session: unknown) {
@@ -349,7 +370,7 @@ export default function App() {
     setAuthStatus('loading');
 
     try {
-      await supabaseAuthRequest('signup', {
+      const signupResult = await supabaseAuthRequest('signup', {
         email,
         password: signupForm.password,
         data: {
@@ -357,6 +378,18 @@ export default function App() {
           phone
         }
       });
+
+      try {
+        await sendSignupWebhook({
+          name,
+          email,
+          phone,
+          user_id: signupResult?.user?.id || signupResult?.id || '',
+          registered_at: new Date().toISOString()
+        });
+      } catch (webhookError) {
+        console.error('[n8n] Signup webhook failed.', webhookError);
+      }
 
       setSignupForm({ name: '', email: '', phone: '', password: '' });
       setAuthMode('login');
