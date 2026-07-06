@@ -11,6 +11,55 @@
   </head>
   <body>
     <div id="root"></div>
-    <script type="module" src="/src/main.tsx"></script>
+    <script type="module">
+      (async () => {
+        const SUPABASE_URL = 'https://ufthcuuxjwvbqjvdsdej.supabase.co';
+        const SUPABASE_PUBLISHABLE_KEY = 'sb_publishable_p7e_ESjgVZmZBIxsyQAxjw_fa9U8PEu';
+        const AUTH_STORAGE_KEY = 'nikita-supabase-session';
+
+        const redirectToLogin = () => {
+          try {
+            window.localStorage.removeItem(AUTH_STORAGE_KEY);
+          } catch {
+            // Fail closed: blocked storage still redirects to login.
+          }
+          window.location.replace('index.html');
+        };
+
+        const loadDashboard = async () => {
+          await import('/src/main.tsx');
+        };
+
+        try {
+          const rawSession = window.localStorage.getItem(AUTH_STORAGE_KEY);
+          const session = rawSession ? JSON.parse(rawSession) : null;
+          const accessToken = session && typeof session.access_token === 'string'
+            ? session.access_token
+            : '';
+
+          if (!accessToken) {
+            redirectToLogin();
+            return;
+          }
+
+          const response = await fetch(`${SUPABASE_URL}/auth/v1/user`, {
+            method: 'GET',
+            headers: {
+              apikey: SUPABASE_PUBLISHABLE_KEY,
+              Authorization: `Bearer ${accessToken}`
+            }
+          });
+
+          if (!response.ok) {
+            redirectToLogin();
+            return;
+          }
+
+          await loadDashboard();
+        } catch {
+          redirectToLogin();
+        }
+      })();
+    </script>
   </body>
 </html>
