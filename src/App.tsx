@@ -155,7 +155,8 @@ export default function App() {
   }, []);
   const isDashboardPage = useMemo(() => {
     if (typeof window === 'undefined') return false;
-    return window.location.pathname.toLowerCase().endsWith('/dashboard.html');
+    const pathname = window.location.pathname.toLowerCase().replace(/\/+$/, '');
+    return pathname.endsWith('/dashboard.html') || pathname.endsWith('/dashboard');
   }, []);
 
   const [stepIndex, setStepIndex] = useState(() => Number(savedState.stepIndex || 0));
