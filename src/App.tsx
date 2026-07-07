@@ -377,6 +377,14 @@ export default function App() {
         }
       });
 
+      // When email confirmation is enabled, Supabase returns 200 for an
+      // already-registered email but with an empty identities array.
+      const identities = signupResult?.identities ?? signupResult?.user?.identities;
+      if (Array.isArray(identities) && identities.length === 0) {
+        setAuthMessage('This email is already registered. Please login instead.');
+        return;
+      }
+
       try {
         await sendSignupWebhook({
           name,
@@ -393,7 +401,12 @@ export default function App() {
       setAuthMode('login');
       setAuthMessage('Signup successful. Please login.');
     } catch (error) {
-      setAuthMessage(error instanceof Error ? error.message : 'Signup failed. Please try again.');
+      const message = error instanceof Error ? error.message : '';
+      if (/already\s*(registered|exists)|user_already_exists|email_exists/i.test(message)) {
+        setAuthMessage('This email is already registered. Please login instead.');
+      } else {
+        setAuthMessage(message || 'Signup failed. Please try again.');
+      }
     } finally {
       setAuthStatus('idle');
     }
