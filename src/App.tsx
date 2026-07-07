@@ -145,6 +145,49 @@ function saveAuthSession(session: unknown) {
   }
 }
 
+interface ProfileRow {
+  plan: 'free' | 'basic' | 'premium';
+  plan_status: 'active' | 'inactive';
+  manual_access: boolean;
+  role: 'user' | 'admin';
+  plan_expires_at: string | null;
+}
+
+async function fetchProfile(userId: string, accessToken: string): Promise<ProfileRow | null> {
+  const response = await fetch(
+    `${SUPABASE_URL}/rest/v1/profiles?id=eq.${userId}&select=plan,plan_status,manual_access,role,plan_expires_at`,
+    {
+      headers: {
+        apikey: SUPABASE_PUBLISHABLE_KEY,
+        Authorization: `Bearer ${accessToken}`
+      }
+    }
+  );
+
+  if (!response.ok) return null;
+
+  const rows = await response.json().catch(() => []);
+  return Array.isArray(rows) && rows.length > 0 ? rows[0] : null;
+}
+
+// Decides the plan label to show, in priority order: admin > manual
+// access > an active, non-expired paid plan > free.
+function getPlanLabel(profile: ProfileRow | null): string {
+  if (!profile) return 'Free Plan';
+  if (profile.role === 'admin') return 'Admin Access';
+  if (profile.manual_access) return 'Manual Premium Access';
+
+  const isActive = profile.plan_status === 'active';
+  const notExpired = !profile.plan_expires_at || new Date(profile.plan_expires_at).getTime() > Date.now();
+
+  if (isActive && notExpired) {
+    if (profile.plan === 'premium') return 'Premium Plan';
+    if (profile.plan === 'basic') return 'Basic Plan';
+  }
+
+  return 'Free Plan';
+}
+
 export default function App() {
   const savedState = useMemo<Record<string, any>>(() => {
     if (typeof window === 'undefined') return {};
@@ -183,6 +226,7 @@ export default function App() {
   });
   const [forgotEmail, setForgotEmail] = useState('');
   const [resetPassword, setResetPassword] = useState('');
+  const [profile, setProfile] = useState<ProfileRow | null>(null);
   const [resetAccessToken, setResetAccessToken] = useState('');
   const audioRef = useRef<HTMLAudioElement>(null);
   const typing = useRomanticTyping<HTMLTextAreaElement>();
@@ -196,6 +240,23 @@ export default function App() {
       window.history.replaceState(null, '', window.location.pathname);
     }
   }, []);
+
+  useEffect(() => {
+    if (!isDashboardPage) return;
+
+    try {
+      const raw = window.localStorage.getItem(AUTH_STORAGE_KEY);
+      const session = raw ? JSON.parse(raw) : null;
+      const accessToken = session?.access_token;
+      const userId = session?.user?.id;
+
+      if (accessToken && userId) {
+        fetchProfile(userId, accessToken).then(setProfile);
+      }
+    } catch {
+      // The plan label just won't show if this fails; the dashboard itself is unaffected.
+    }
+  }, [isDashboardPage]);
 
   const currentStep = STEPS[Math.min(stepIndex, STEPS.length - 1)];
   const currentClicks = buttonClicks[currentStep.id] || 0;
@@ -809,7 +870,12 @@ export default function App() {
         isPulsing={isPBarPulsing}
       />
 
-      <main className="relative z-10 min-h-screen w-full max-w-xl mx-auto px-4 pt-36 pb-20 flex items-center justify-center">
+      <main className="relative z-10 min-h-screen w-full max-w-xl mx-auto px-4 pt-36 pb-20 flex flex-col items-center justify-center gap-4">
+        {profile && (
+          <span className="inline-flex items-center gap-2 rounded-full border border-[#e8d0d4]/40 bg-white/80 backdrop-blur-md px-4 py-1.5 text-xs font-outfit font-semibold tracking-wide text-[#5a3d42] shadow-[0_4px_16px_rgba(140,100,110,0.08)]">
+            Your Plan: {getPlanLabel(profile)}
+          </span>
+        )}
         <AnimatePresence mode="wait">
           {!isComplete ? (
             <motion.section
