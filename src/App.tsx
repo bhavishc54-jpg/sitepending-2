@@ -13,7 +13,7 @@ const REQUIRED_CLICKS = 3;
 const AUTH_STORAGE_KEY = 'nikita-supabase-session';
 
 type StepKind = 'choice' | 'textarea';
-type AuthMode = 'login' | 'signup';
+type AuthMode = 'login' | 'signup' | 'forgot' | 'reset';
 type AuthStatus = 'idle' | 'loading';
 
 interface RomanticStep {
@@ -113,7 +113,7 @@ async function supabaseAuthRequest(path: string, body: Record<string, unknown>) 
       data?.message ||
       data?.error_description ||
       data?.error ||
-      'Something went wrong. Please try again.';
+      'Something slipped just now. Please try again in a moment.';
     throw new Error(message);
   }
 
@@ -181,8 +181,21 @@ export default function App() {
     email: '',
     password: ''
   });
+  const [forgotEmail, setForgotEmail] = useState('');
+  const [resetPassword, setResetPassword] = useState('');
+  const [resetAccessToken, setResetAccessToken] = useState('');
   const audioRef = useRef<HTMLAudioElement>(null);
   const typing = useRomanticTyping<HTMLTextAreaElement>();
+
+  useEffect(() => {
+    const hash = window.location.hash.substring(1);
+    const params = new URLSearchParams(hash);
+    if (params.get('type') === 'recovery' && params.get('access_token')) {
+      setResetAccessToken(params.get('access_token')!);
+      setAuthMode('reset');
+      window.history.replaceState(null, '', window.location.pathname);
+    }
+  }, []);
 
   const currentStep = STEPS[Math.min(stepIndex, STEPS.length - 1)];
   const currentClicks = buttonClicks[currentStep.id] || 0;
@@ -361,7 +374,7 @@ export default function App() {
     const phone = signupForm.phone.trim();
 
     if (!name || !email || !phone || !signupForm.password) {
-      setAuthMessage('Please fill in all signup fields.');
+      setAuthMessage('Please fill in a few details to continue.');
       return;
     }
 
@@ -381,7 +394,7 @@ export default function App() {
       // already-registered email but with an empty identities array.
       const identities = signupResult?.identities ?? signupResult?.user?.identities;
       if (Array.isArray(identities) && identities.length === 0) {
-        setAuthMessage('This email is already registered. Please login instead.');
+        setAuthMessage('This email already has a space here. Please sign in instead.');
         return;
       }
 
@@ -399,13 +412,13 @@ export default function App() {
 
       setSignupForm({ name: '', email: '', phone: '', password: '' });
       setAuthMode('login');
-      setAuthMessage('Signup successful. Please login.');
+      setAuthMessage('Your space is ready. Please sign in.');
     } catch (error) {
       const message = error instanceof Error ? error.message : '';
       if (/already\s*(registered|exists)|user_already_exists|email_exists/i.test(message)) {
-        setAuthMessage('This email is already registered. Please login instead.');
+        setAuthMessage('This email already has a space here. Please sign in instead.');
       } else {
-        setAuthMessage(message || 'Signup failed. Please try again.');
+        setAuthMessage(message || 'That didn’t go through. Please try again in a moment.');
       }
     } finally {
       setAuthStatus('idle');
@@ -419,7 +432,7 @@ export default function App() {
     const email = loginForm.email.trim();
 
     if (!email || !loginForm.password) {
-      setAuthMessage('Please enter your email and password.');
+      setAuthMessage('Please add your email and password to continue.');
       return;
     }
 
@@ -433,7 +446,67 @@ export default function App() {
       saveAuthSession(session);
       window.location.href = 'dashboard.html';
     } catch (error) {
-      setAuthMessage(error instanceof Error ? error.message : 'Login failed. Please try again.');
+      setAuthMessage(error instanceof Error ? error.message : 'That didn’t quite work. Please try again softly.');
+      setAuthStatus('idle');
+    }
+  };
+
+  const handleForgotPassword = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    setAuthMessage('');
+
+    const email = forgotEmail.trim();
+    if (!email) {
+      setAuthMessage('Please share your email first.');
+      return;
+    }
+
+    setAuthStatus('loading');
+
+    try {
+      await supabaseAuthRequest('recover', { email });
+    } catch {
+      // Intentionally swallowed — show the same message regardless.
+    } finally {
+      setAuthStatus('idle');
+      setAuthMessage('If this email has a space with us, a reset link is on its way. 💌');
+    }
+  };
+
+  const handleResetPassword = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    setAuthMessage('');
+
+    if (!resetPassword || resetPassword.length < 6) {
+      setAuthMessage('A little longer, please — at least 6 characters.');
+      return;
+    }
+
+    setAuthStatus('loading');
+
+    try {
+      const response = await fetch(`${SUPABASE_URL}/auth/v1/user`, {
+        method: 'PUT',
+        headers: {
+          apikey: SUPABASE_PUBLISHABLE_KEY,
+          Authorization: `Bearer ${resetAccessToken}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ password: resetPassword })
+      });
+
+      if (!response.ok) {
+        const data = await response.json().catch(() => ({}));
+        throw new Error(data?.msg || data?.message || data?.error_description || 'That didn’t go through. Please try again in a moment.');
+      }
+
+      setResetPassword('');
+      setResetAccessToken('');
+      setAuthMode('login');
+      setAuthMessage('Your new password is saved. Please sign in.');
+    } catch (error) {
+      setAuthMessage(error instanceof Error ? error.message : 'That didn’t go through. Please try again in a moment.');
+    } finally {
       setAuthStatus('idle');
     }
   };
@@ -479,45 +552,51 @@ export default function App() {
 
             <div className="relative">
               <p className="font-outfit uppercase tracking-[0.32em] text-[10px] text-pink-300/65 font-bold mb-4">
-                Private love space
+                Your private little space
               </p>
               <h1 className="font-display font-light italic text-3xl sm:text-4xl leading-tight tracking-tight mb-4">
-                {isSignup ? 'Create your account' : 'Login to continue'}
+                {authMode === 'forgot' ? 'Let’s find your way back' : authMode === 'reset' ? 'Choose a new password' : isSignup ? 'Create your little space' : 'Welcome back'}
               </h1>
               <p className="text-sm sm:text-base leading-relaxed text-pink-100/82 max-w-md mx-auto mb-7">
-                {isSignup
-                  ? 'Sign up softly, then login to open the romantic dashboard.'
-                  : 'Enter your email and password to open the dashboard.'}
+                {authMode === 'forgot'
+                  ? 'Share your email and we’ll send a gentle link to reset it.'
+                  : authMode === 'reset'
+                    ? 'Choose a new password to keep your space safe.'
+                    : isSignup
+                      ? 'Make a little space of your own, then sign in whenever you’re ready.'
+                      : 'Sign in softly to step back into your space.'}
               </p>
 
-              <div className="grid grid-cols-2 gap-2 rounded-full border border-white/10 bg-white/5 p-1 mb-6">
-                <button
-                  type="button"
-                  className={`rounded-full px-4 py-2 text-xs font-outfit font-bold uppercase tracking-[0.18em] transition-colors ${
-                    !isSignup ? 'bg-white text-[#1a050d]' : 'text-pink-100 hover:bg-white/10'
-                  }`}
-                  aria-pressed={!isSignup}
-                  onClick={() => {
-                    setAuthMode('login');
-                    setAuthMessage('');
-                  }}
-                >
-                  Login
-                </button>
-                <button
-                  type="button"
-                  className={`rounded-full px-4 py-2 text-xs font-outfit font-bold uppercase tracking-[0.18em] transition-colors ${
-                    isSignup ? 'bg-white text-[#1a050d]' : 'text-pink-100 hover:bg-white/10'
-                  }`}
-                  aria-pressed={isSignup}
-                  onClick={() => {
-                    setAuthMode('signup');
-                    setAuthMessage('');
-                  }}
-                >
-                  Signup
-                </button>
-              </div>
+              {(authMode === 'login' || authMode === 'signup') && (
+                <div className="grid grid-cols-2 gap-2 rounded-full border border-white/10 bg-white/5 p-1 mb-6">
+                  <button
+                    type="button"
+                    className={`rounded-full px-4 py-2 text-xs font-outfit font-bold uppercase tracking-[0.18em] transition-colors ${
+                      !isSignup ? 'bg-white text-[#1a050d]' : 'text-pink-100 hover:bg-white/10'
+                    }`}
+                    aria-pressed={!isSignup}
+                    onClick={() => {
+                      setAuthMode('login');
+                      setAuthMessage('');
+                    }}
+                  >
+                    Login
+                  </button>
+                  <button
+                    type="button"
+                    className={`rounded-full px-4 py-2 text-xs font-outfit font-bold uppercase tracking-[0.18em] transition-colors ${
+                      isSignup ? 'bg-white text-[#1a050d]' : 'text-pink-100 hover:bg-white/10'
+                    }`}
+                    aria-pressed={isSignup}
+                    onClick={() => {
+                      setAuthMode('signup');
+                      setAuthMessage('');
+                    }}
+                  >
+                    Signup
+                  </button>
+                </div>
+              )}
 
               {isSignup ? (
                 <form className="grid gap-4 text-left" onSubmit={handleSignup}>
@@ -570,10 +649,10 @@ export default function App() {
                     className="w-full mt-2 px-9 py-3.5 bg-white text-[#1a050d] rounded-full text-xs uppercase tracking-[0.2em] font-outfit font-bold shadow-[0_10px_30px_rgba(255,255,255,0.08)] hover:shadow-[0_10px_35px_rgba(255,77,109,0.3)] cursor-pointer disabled:opacity-45 disabled:cursor-not-allowed focus-visible:outline focus-visible:outline-2 focus-visible:outline-pink-200"
                     disabled={authStatus === 'loading'}
                   >
-                    {authStatus === 'loading' ? 'Creating...' : 'Create account'}
+                    {authStatus === 'loading' ? 'Creating your space…' : 'Create my space'}
                   </button>
                 </form>
-              ) : (
+              ) : authMode === 'login' ? (
                 <form className="grid gap-4 text-left" onSubmit={handleLogin}>
                   <label className="grid gap-2 text-xs font-outfit font-bold uppercase tracking-[0.18em] text-pink-200/75">
                     Email
@@ -602,10 +681,66 @@ export default function App() {
                     className="w-full mt-2 px-9 py-3.5 bg-white text-[#1a050d] rounded-full text-xs uppercase tracking-[0.2em] font-outfit font-bold shadow-[0_10px_30px_rgba(255,255,255,0.08)] hover:shadow-[0_10px_35px_rgba(255,77,109,0.3)] cursor-pointer disabled:opacity-45 disabled:cursor-not-allowed focus-visible:outline focus-visible:outline-2 focus-visible:outline-pink-200"
                     disabled={authStatus === 'loading'}
                   >
-                    {authStatus === 'loading' ? 'Logging in...' : 'Login'}
+                    {authStatus === 'loading' ? 'Opening…' : 'Step inside'}
+                  </button>
+                  <button
+                    type="button"
+                    className="mt-1 text-xs text-pink-200/60 hover:text-pink-100 transition-colors cursor-pointer text-center"
+                    onClick={() => { setAuthMode('forgot'); setAuthMessage(''); }}
+                  >
+                    Forgot your password? It happens 💌
                   </button>
                 </form>
-              )}
+              ) : authMode === 'forgot' ? (
+                <form className="grid gap-4 text-left" onSubmit={handleForgotPassword}>
+                  <label className="grid gap-2 text-xs font-outfit font-bold uppercase tracking-[0.18em] text-pink-200/75">
+                    Email
+                    <input
+                      className="w-full p-4 bg-white/5 border border-white/10 text-[#fff0f3] text-sm font-sans normal-case tracking-normal focus:bg-white/10 outline-none transition-all duration-300 rounded-xl placeholder:text-white/25 focus:border-pink-300 focus:ring-2 focus:ring-pink-300/25"
+                      type="email"
+                      autoComplete="email"
+                      value={forgotEmail}
+                      onChange={event => setForgotEmail(event.target.value)}
+                      required
+                    />
+                  </label>
+                  <button
+                    type="submit"
+                    className="w-full mt-2 px-9 py-3.5 bg-white text-[#1a050d] rounded-full text-xs uppercase tracking-[0.2em] font-outfit font-bold shadow-[0_10px_30px_rgba(255,255,255,0.08)] hover:shadow-[0_10px_35px_rgba(255,77,109,0.3)] cursor-pointer disabled:opacity-45 disabled:cursor-not-allowed focus-visible:outline focus-visible:outline-2 focus-visible:outline-pink-200"
+                    disabled={authStatus === 'loading'}
+                  >
+                    {authStatus === 'loading' ? 'Sending…' : 'Send my reset link'}
+                  </button>
+                  <button
+                    type="button"
+                    className="mt-1 text-xs text-pink-200/60 hover:text-pink-100 transition-colors cursor-pointer text-center"
+                    onClick={() => { setAuthMode('login'); setAuthMessage(''); }}
+                  >
+                    Back to sign in
+                  </button>
+                </form>
+              ) : authMode === 'reset' ? (
+                <form className="grid gap-4 text-left" onSubmit={handleResetPassword}>
+                  <label className="grid gap-2 text-xs font-outfit font-bold uppercase tracking-[0.18em] text-pink-200/75">
+                    New Password
+                    <input
+                      className="w-full p-4 bg-white/5 border border-white/10 text-[#fff0f3] text-sm font-sans normal-case tracking-normal focus:bg-white/10 outline-none transition-all duration-300 rounded-xl placeholder:text-white/25 focus:border-pink-300 focus:ring-2 focus:ring-pink-300/25"
+                      type="password"
+                      autoComplete="new-password"
+                      value={resetPassword}
+                      onChange={event => setResetPassword(event.target.value)}
+                      required
+                    />
+                  </label>
+                  <button
+                    type="submit"
+                    className="w-full mt-2 px-9 py-3.5 bg-white text-[#1a050d] rounded-full text-xs uppercase tracking-[0.2em] font-outfit font-bold shadow-[0_10px_30px_rgba(255,255,255,0.08)] hover:shadow-[0_10px_35px_rgba(255,77,109,0.3)] cursor-pointer disabled:opacity-45 disabled:cursor-not-allowed focus-visible:outline focus-visible:outline-2 focus-visible:outline-pink-200"
+                    disabled={authStatus === 'loading'}
+                  >
+                    {authStatus === 'loading' ? 'Saving…' : 'Save new password'}
+                  </button>
+                </form>
+              ) : null}
 
               {authMessage && (
                 <p className="mt-5 rounded-xl border border-pink-200/20 bg-white/5 px-4 py-3 text-center text-sm text-pink-100" role="status" aria-live="polite">
