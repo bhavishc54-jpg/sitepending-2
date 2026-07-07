@@ -31,7 +31,7 @@ export function BackgroundHearts() {
         lastPos.current = { x, y };
         
         // Colors from the "Geometric Balance" design theme
-        const colors = ['#c9a0a8', '#d4adb5', '#e8c8ce', '#f0dde0'];
+        const colors = ['#ff4d6d', '#ff85a1', '#ffb3c1', '#ffd6e7'];
         const randomColor = colors[Math.floor(Math.random() * colors.length)];
         const size = Math.random() * 8 + 8; // size between 8px and 16px
         const rotation = Math.random() * 40 - 20; // rotation between -20 and 20 deg
@@ -85,7 +85,7 @@ export function BackgroundHearts() {
             style={{ 
               fontSize: `${p.size}px`,
               color: p.color,
-              filter: 'drop-shadow(0 0 3px rgba(201, 160, 168, 0.3))'
+              filter: 'drop-shadow(0 0 3px rgba(255, 77, 109, 0.4))'
             }}
           >
             💖

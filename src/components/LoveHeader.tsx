@@ -79,19 +79,19 @@ export function LoveHeader({ currentQuestion, totalQuestions, isGlowing, isPulsi
       <motion.div
         className="relative rounded-2xl p-[1px] overflow-hidden"
         style={{
-          background: 'linear-gradient(135deg, rgba(201, 160, 168, 0.15), rgba(201, 160, 168, 0.25), rgba(212, 173, 181, 0.15))',
+          background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.1), rgba(255, 77, 109, 0.2), rgba(255, 133, 161, 0.1))',
         }}
         animate={{
           boxShadow: isGlowing
-            ? '0 8px 24px rgba(201, 160, 168, 0.2), 0 0 16px rgba(212, 173, 181, 0.15)'
-            : '0 6px 20px rgba(140, 100, 110, 0.1)',
+            ? '0 15px 35px rgba(255, 77, 109, 0.35), 0 0 25px rgba(255, 133, 161, 0.25)'
+            : '0 10px 30px rgba(0, 0, 0, 0.5)',
         }}
         transition={{ duration: 0.4 }}
       >
         {/* Shimmer overlay moving slowly across the card */}
         <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent translate-x-[-100%] animate-[shimmer_6s_infinite_linear] pointer-events-none" />
 
-        <div className="relative backdrop-blur-2xl bg-white/80 rounded-2xl p-3.5 pointer-events-auto border border-[#e8d0d4]/30">
+        <div className="relative backdrop-blur-2xl bg-white/5 rounded-2xl p-3.5 pointer-events-auto border border-white/5">
           {/* Header sparkles layer */}
           <AnimatePresence>
             {headerSparkles.map(s => (
@@ -140,34 +140,34 @@ export function LoveHeader({ currentQuestion, totalQuestions, isGlowing, isPulsi
               <h1 className="text-[10px] uppercase tracking-[0.3em] font-outfit text-pink-300/80 mb-0.5 font-bold">
                 💖 Love Journey
               </h1>
-              <p className="text-sm font-medium text-[#3d2c2e]/90">
-                Question <span className="font-semibold text-[#3d2c2e]">{String(currentQuestion).padStart(2, '0')}</span>{' '}
-                <span className="text-[#b8868f]/60 italic text-xs">of {totalQuestions}</span>
+              <p className="text-sm font-medium text-white/90">
+                Question <span className="font-semibold text-white">{String(currentQuestion).padStart(2, '0')}</span>{' '}
+                <span className="text-pink-300/50 italic text-xs">of {totalQuestions}</span>
               </p>
             </div>
             <div className="text-right">
               <motion.span
-                className="text-xl font-light tracking-tighter text-[#3d2c2e] font-outfit"
+                className="text-xl font-light tracking-tighter text-white font-outfit"
                 animate={{ scale: isPulsing ? [1, 1.15, 1] : 1 }}
                 transition={{ duration: 0.5 }}
               >
                 {displayedPct}%
               </motion.span>
-              <span className="block text-[8px] uppercase tracking-widest text-[#b8868f]/60 font-bold">
+              <span className="block text-[8px] uppercase tracking-widest text-pink-300/50 font-bold">
                 Completed
               </span>
             </div>
           </div>
 
           {/* Progress bar container */}
-          <div className="w-full h-[6px] bg-[#e8d0d4]/30 rounded-full overflow-hidden border border-[#e8d0d4]/20 relative">
+          <div className="w-full h-[6px] bg-black/40 rounded-full overflow-hidden border border-white/5 relative">
             <motion.div
-              className="h-full rounded-full bg-gradient-to-r from-[#b8868f] via-[#c9a0a8] to-[#d4adb5]"
+              className="h-full rounded-full bg-gradient-to-r from-[#ff4d6d] via-[#ff85a1] to-[#ffb3c1]"
               initial={{ width: 0 }}
               animate={{
                 width: `${percentage}%`,
                 scaleY: isPulsing ? [1, 1.35, 1] : 1,
-                boxShadow: isGlowing ? '0 0 8px rgba(201, 160, 168, 0.5)' : '0 0 4px rgba(201, 160, 168, 0.3)',
+                boxShadow: isGlowing ? '0 0 10px rgba(255, 77, 109, 0.8)' : '0 0 4px rgba(255, 77, 109, 0.3)',
               }}
               transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
             />
