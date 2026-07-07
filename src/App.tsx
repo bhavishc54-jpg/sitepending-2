@@ -554,9 +554,12 @@ export default function App() {
               <p className="font-outfit uppercase tracking-[0.32em] text-[10px] text-pink-400/70 font-bold mb-5">
                 Your private little space
               </p>
-              <h1 className="font-display font-light italic text-3xl sm:text-4xl leading-tight tracking-tight mb-5 text-[#3d2c2e]">
+              <h1 className="font-display font-light italic text-3xl sm:text-4xl leading-tight tracking-tight mb-3 text-[#3d2c2e]">
                 {authMode === 'forgot' ? "Let's find your way back" : authMode === 'reset' ? 'Choose a new password' : isSignup ? 'Create your little space' : 'Welcome back'}
               </h1>
+              <p className="font-display italic text-sm text-[#b8868f]/80 mb-5">
+                A calm space for two hearts
+              </p>
               <p className="text-sm sm:text-base leading-relaxed text-[#7a5a5e] max-w-md mx-auto mb-8">
                 {authMode === 'forgot'
                   ? "Share your email and we'll send a gentle link to reset it."
@@ -571,7 +574,7 @@ export default function App() {
                 <div className="grid grid-cols-2 gap-2 rounded-full border border-[#e8d0d4]/30 bg-[#f5ede8]/60 p-1.5 mb-8">
                   <button
                     type="button"
-                    className={`rounded-full px-4 py-2 text-xs font-outfit font-bold uppercase tracking-[0.18em] transition-colors ${
+                    className={`rounded-full px-4 py-2 text-xs font-outfit font-bold uppercase tracking-[0.18em] transition-all duration-300 ease-out ${
                       !isSignup ? 'bg-[#c9a0a8] text-white' : 'text-[#7a5a5e] hover:bg-[#f0e0e3]/60'
                     }`}
                     aria-pressed={!isSignup}
@@ -584,7 +587,7 @@ export default function App() {
                   </button>
                   <button
                     type="button"
-                    className={`rounded-full px-4 py-2 text-xs font-outfit font-bold uppercase tracking-[0.18em] transition-colors ${
+                    className={`rounded-full px-4 py-2 text-xs font-outfit font-bold uppercase tracking-[0.18em] transition-all duration-300 ease-out ${
                       isSignup ? 'bg-[#c9a0a8] text-white' : 'text-[#7a5a5e] hover:bg-[#f0e0e3]/60'
                     }`}
                     aria-pressed={isSignup}
@@ -603,7 +606,7 @@ export default function App() {
                   <label className="grid gap-2.5 text-xs font-outfit font-bold uppercase tracking-[0.18em] text-[#8a6068]">
                     Name
                     <input
-                      className="w-full p-4 bg-[#faf6f2]/70 border border-[#e8d0d4]/40 text-[#3d2c2e] text-sm font-sans normal-case tracking-normal focus:bg-white outline-none transition-all duration-300 rounded-2xl placeholder:text-[#bfa5a9] focus:border-[#c9a0a8] focus:ring-2 focus:ring-[#c9a0a8]/20"
+                      className="w-full p-4 bg-[#faf6f2]/70 border border-[#e8d0d4]/40 text-[#3d2c2e] text-sm font-sans normal-case tracking-normal focus:bg-white outline-none transition-all duration-300 ease-out rounded-2xl placeholder:text-[#bfa5a9] hover:border-[#d4adb5] focus:border-[#c9a0a8] focus:ring-2 focus:ring-[#c9a0a8]/20"
                       type="text"
                       autoComplete="name"
                       value={signupForm.name}
@@ -614,7 +617,7 @@ export default function App() {
                   <label className="grid gap-2.5 text-xs font-outfit font-bold uppercase tracking-[0.18em] text-[#8a6068]">
                     Email
                     <input
-                      className="w-full p-4 bg-[#faf6f2]/70 border border-[#e8d0d4]/40 text-[#3d2c2e] text-sm font-sans normal-case tracking-normal focus:bg-white outline-none transition-all duration-300 rounded-2xl placeholder:text-[#bfa5a9] focus:border-[#c9a0a8] focus:ring-2 focus:ring-[#c9a0a8]/20"
+                      className="w-full p-4 bg-[#faf6f2]/70 border border-[#e8d0d4]/40 text-[#3d2c2e] text-sm font-sans normal-case tracking-normal focus:bg-white outline-none transition-all duration-300 ease-out rounded-2xl placeholder:text-[#bfa5a9] hover:border-[#d4adb5] focus:border-[#c9a0a8] focus:ring-2 focus:ring-[#c9a0a8]/20"
                       type="email"
                       autoComplete="email"
                       value={signupForm.email}
@@ -625,7 +628,7 @@ export default function App() {
                   <label className="grid gap-2.5 text-xs font-outfit font-bold uppercase tracking-[0.18em] text-[#8a6068]">
                     Phone
                     <input
-                      className="w-full p-4 bg-[#faf6f2]/70 border border-[#e8d0d4]/40 text-[#3d2c2e] text-sm font-sans normal-case tracking-normal focus:bg-white outline-none transition-all duration-300 rounded-2xl placeholder:text-[#bfa5a9] focus:border-[#c9a0a8] focus:ring-2 focus:ring-[#c9a0a8]/20"
+                      className="w-full p-4 bg-[#faf6f2]/70 border border-[#e8d0d4]/40 text-[#3d2c2e] text-sm font-sans normal-case tracking-normal focus:bg-white outline-none transition-all duration-300 ease-out rounded-2xl placeholder:text-[#bfa5a9] hover:border-[#d4adb5] focus:border-[#c9a0a8] focus:ring-2 focus:ring-[#c9a0a8]/20"
                       type="tel"
                       autoComplete="tel"
                       value={signupForm.phone}
@@ -636,7 +639,7 @@ export default function App() {
                   <label className="grid gap-2.5 text-xs font-outfit font-bold uppercase tracking-[0.18em] text-[#8a6068]">
                     Password
                     <input
-                      className="w-full p-4 bg-[#faf6f2]/70 border border-[#e8d0d4]/40 text-[#3d2c2e] text-sm font-sans normal-case tracking-normal focus:bg-white outline-none transition-all duration-300 rounded-2xl placeholder:text-[#bfa5a9] focus:border-[#c9a0a8] focus:ring-2 focus:ring-[#c9a0a8]/20"
+                      className="w-full p-4 bg-[#faf6f2]/70 border border-[#e8d0d4]/40 text-[#3d2c2e] text-sm font-sans normal-case tracking-normal focus:bg-white outline-none transition-all duration-300 ease-out rounded-2xl placeholder:text-[#bfa5a9] hover:border-[#d4adb5] focus:border-[#c9a0a8] focus:ring-2 focus:ring-[#c9a0a8]/20"
                       type="password"
                       autoComplete="new-password"
                       value={signupForm.password}
@@ -646,7 +649,7 @@ export default function App() {
                   </label>
                   <button
                     type="submit"
-                    className="w-full mt-3 px-9 py-3.5 bg-[#c9a0a8] text-white rounded-full text-xs uppercase tracking-[0.2em] font-outfit font-bold shadow-[0_6px_20px_rgba(201,160,168,0.18)] hover:shadow-[0_8px_28px_rgba(201,160,168,0.26)] cursor-pointer disabled:opacity-45 disabled:cursor-not-allowed focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#c9a0a8]"
+                    className="w-full mt-3 px-9 py-3.5 bg-[#c9a0a8] text-white rounded-full text-xs uppercase tracking-[0.2em] font-outfit font-bold shadow-[0_6px_20px_rgba(201,160,168,0.18)] hover:shadow-[0_8px_28px_rgba(201,160,168,0.26)] transition-all duration-300 ease-out hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.98] cursor-pointer disabled:opacity-45 disabled:cursor-not-allowed disabled:hover:translate-y-0 focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#c9a0a8]"
                     disabled={authStatus === 'loading'}
                   >
                     {authStatus === 'loading' ? 'Creating your space…' : 'Create my space'}
@@ -657,7 +660,7 @@ export default function App() {
                   <label className="grid gap-2.5 text-xs font-outfit font-bold uppercase tracking-[0.18em] text-[#8a6068]">
                     Email
                     <input
-                      className="w-full p-4 bg-[#faf6f2]/70 border border-[#e8d0d4]/40 text-[#3d2c2e] text-sm font-sans normal-case tracking-normal focus:bg-white outline-none transition-all duration-300 rounded-2xl placeholder:text-[#bfa5a9] focus:border-[#c9a0a8] focus:ring-2 focus:ring-[#c9a0a8]/20"
+                      className="w-full p-4 bg-[#faf6f2]/70 border border-[#e8d0d4]/40 text-[#3d2c2e] text-sm font-sans normal-case tracking-normal focus:bg-white outline-none transition-all duration-300 ease-out rounded-2xl placeholder:text-[#bfa5a9] hover:border-[#d4adb5] focus:border-[#c9a0a8] focus:ring-2 focus:ring-[#c9a0a8]/20"
                       type="email"
                       autoComplete="email"
                       value={loginForm.email}
@@ -668,7 +671,7 @@ export default function App() {
                   <label className="grid gap-2.5 text-xs font-outfit font-bold uppercase tracking-[0.18em] text-[#8a6068]">
                     Password
                     <input
-                      className="w-full p-4 bg-[#faf6f2]/70 border border-[#e8d0d4]/40 text-[#3d2c2e] text-sm font-sans normal-case tracking-normal focus:bg-white outline-none transition-all duration-300 rounded-2xl placeholder:text-[#bfa5a9] focus:border-[#c9a0a8] focus:ring-2 focus:ring-[#c9a0a8]/20"
+                      className="w-full p-4 bg-[#faf6f2]/70 border border-[#e8d0d4]/40 text-[#3d2c2e] text-sm font-sans normal-case tracking-normal focus:bg-white outline-none transition-all duration-300 ease-out rounded-2xl placeholder:text-[#bfa5a9] hover:border-[#d4adb5] focus:border-[#c9a0a8] focus:ring-2 focus:ring-[#c9a0a8]/20"
                       type="password"
                       autoComplete="current-password"
                       value={loginForm.password}
@@ -678,14 +681,14 @@ export default function App() {
                   </label>
                   <button
                     type="submit"
-                    className="w-full mt-3 px-9 py-3.5 bg-[#c9a0a8] text-white rounded-full text-xs uppercase tracking-[0.2em] font-outfit font-bold shadow-[0_6px_20px_rgba(201,160,168,0.18)] hover:shadow-[0_8px_28px_rgba(201,160,168,0.26)] cursor-pointer disabled:opacity-45 disabled:cursor-not-allowed focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#c9a0a8]"
+                    className="w-full mt-3 px-9 py-3.5 bg-[#c9a0a8] text-white rounded-full text-xs uppercase tracking-[0.2em] font-outfit font-bold shadow-[0_6px_20px_rgba(201,160,168,0.18)] hover:shadow-[0_8px_28px_rgba(201,160,168,0.26)] transition-all duration-300 ease-out hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.98] cursor-pointer disabled:opacity-45 disabled:cursor-not-allowed disabled:hover:translate-y-0 focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#c9a0a8]"
                     disabled={authStatus === 'loading'}
                   >
                     {authStatus === 'loading' ? 'Opening…' : 'Step inside'}
                   </button>
                   <button
                     type="button"
-                    className="mt-2 text-xs text-[#b8868f]/70 hover:text-[#8a6068] transition-colors cursor-pointer text-center"
+                    className="mt-2 text-xs text-[#b8868f]/70 hover:text-[#8a6068] transition-colors duration-300 ease-out cursor-pointer text-center"
                     onClick={() => { setAuthMode('forgot'); setAuthMessage(''); }}
                   >
                     Forgot your password? It happens 💌
@@ -696,7 +699,7 @@ export default function App() {
                   <label className="grid gap-2.5 text-xs font-outfit font-bold uppercase tracking-[0.18em] text-[#8a6068]">
                     Email
                     <input
-                      className="w-full p-4 bg-[#faf6f2]/70 border border-[#e8d0d4]/40 text-[#3d2c2e] text-sm font-sans normal-case tracking-normal focus:bg-white outline-none transition-all duration-300 rounded-2xl placeholder:text-[#bfa5a9] focus:border-[#c9a0a8] focus:ring-2 focus:ring-[#c9a0a8]/20"
+                      className="w-full p-4 bg-[#faf6f2]/70 border border-[#e8d0d4]/40 text-[#3d2c2e] text-sm font-sans normal-case tracking-normal focus:bg-white outline-none transition-all duration-300 ease-out rounded-2xl placeholder:text-[#bfa5a9] hover:border-[#d4adb5] focus:border-[#c9a0a8] focus:ring-2 focus:ring-[#c9a0a8]/20"
                       type="email"
                       autoComplete="email"
                       value={forgotEmail}
@@ -706,14 +709,14 @@ export default function App() {
                   </label>
                   <button
                     type="submit"
-                    className="w-full mt-3 px-9 py-3.5 bg-[#c9a0a8] text-white rounded-full text-xs uppercase tracking-[0.2em] font-outfit font-bold shadow-[0_6px_20px_rgba(201,160,168,0.18)] hover:shadow-[0_8px_28px_rgba(201,160,168,0.26)] cursor-pointer disabled:opacity-45 disabled:cursor-not-allowed focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#c9a0a8]"
+                    className="w-full mt-3 px-9 py-3.5 bg-[#c9a0a8] text-white rounded-full text-xs uppercase tracking-[0.2em] font-outfit font-bold shadow-[0_6px_20px_rgba(201,160,168,0.18)] hover:shadow-[0_8px_28px_rgba(201,160,168,0.26)] transition-all duration-300 ease-out hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.98] cursor-pointer disabled:opacity-45 disabled:cursor-not-allowed disabled:hover:translate-y-0 focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#c9a0a8]"
                     disabled={authStatus === 'loading'}
                   >
                     {authStatus === 'loading' ? 'Sending…' : 'Send my reset link'}
                   </button>
                   <button
                     type="button"
-                    className="mt-2 text-xs text-[#b8868f]/70 hover:text-[#8a6068] transition-colors cursor-pointer text-center"
+                    className="mt-2 text-xs text-[#b8868f]/70 hover:text-[#8a6068] transition-colors duration-300 ease-out cursor-pointer text-center"
                     onClick={() => { setAuthMode('login'); setAuthMessage(''); }}
                   >
                     Back to sign in
@@ -724,7 +727,7 @@ export default function App() {
                   <label className="grid gap-2.5 text-xs font-outfit font-bold uppercase tracking-[0.18em] text-[#8a6068]">
                     New Password
                     <input
-                      className="w-full p-4 bg-[#faf6f2]/70 border border-[#e8d0d4]/40 text-[#3d2c2e] text-sm font-sans normal-case tracking-normal focus:bg-white outline-none transition-all duration-300 rounded-2xl placeholder:text-[#bfa5a9] focus:border-[#c9a0a8] focus:ring-2 focus:ring-[#c9a0a8]/20"
+                      className="w-full p-4 bg-[#faf6f2]/70 border border-[#e8d0d4]/40 text-[#3d2c2e] text-sm font-sans normal-case tracking-normal focus:bg-white outline-none transition-all duration-300 ease-out rounded-2xl placeholder:text-[#bfa5a9] hover:border-[#d4adb5] focus:border-[#c9a0a8] focus:ring-2 focus:ring-[#c9a0a8]/20"
                       type="password"
                       autoComplete="new-password"
                       value={resetPassword}
@@ -734,7 +737,7 @@ export default function App() {
                   </label>
                   <button
                     type="submit"
-                    className="w-full mt-3 px-9 py-3.5 bg-[#c9a0a8] text-white rounded-full text-xs uppercase tracking-[0.2em] font-outfit font-bold shadow-[0_6px_20px_rgba(201,160,168,0.18)] hover:shadow-[0_8px_28px_rgba(201,160,168,0.26)] cursor-pointer disabled:opacity-45 disabled:cursor-not-allowed focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#c9a0a8]"
+                    className="w-full mt-3 px-9 py-3.5 bg-[#c9a0a8] text-white rounded-full text-xs uppercase tracking-[0.2em] font-outfit font-bold shadow-[0_6px_20px_rgba(201,160,168,0.18)] hover:shadow-[0_8px_28px_rgba(201,160,168,0.26)] transition-all duration-300 ease-out hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.98] cursor-pointer disabled:opacity-45 disabled:cursor-not-allowed disabled:hover:translate-y-0 focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#c9a0a8]"
                     disabled={authStatus === 'loading'}
                   >
                     {authStatus === 'loading' ? 'Saving…' : 'Save new password'}
@@ -784,7 +787,7 @@ export default function App() {
       </div>
 
       <button
-        className="fixed bottom-4 right-4 z-50 px-5 py-2.5 rounded-full border border-[#e8d0d4]/30 bg-white/70 backdrop-blur-md flex items-center gap-2 text-xs font-sans font-semibold text-[#3d2c2e] opacity-80 hover:opacity-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#c9a0a8] transition-opacity cursor-pointer shadow-[0_4px_20px_rgba(140,100,110,0.08)]"
+        className="fixed bottom-4 right-4 z-50 px-5 py-2.5 rounded-full border border-[#e8d0d4]/30 bg-white/70 backdrop-blur-md flex items-center gap-2 text-xs font-sans font-semibold text-[#3d2c2e] opacity-80 hover:opacity-100 hover:-translate-y-0.5 focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#c9a0a8] transition-all duration-300 ease-out cursor-pointer shadow-[0_4px_20px_rgba(140,100,110,0.08)]"
         type="button"
         aria-label={musicOn ? 'Turn background music off' : 'Turn background music on'}
         aria-pressed={musicOn}
@@ -836,7 +839,7 @@ export default function App() {
                   <textarea
                     ref={typing.ref}
                     onInput={typing.handleInput}
-                    className="w-full min-h-[132px] p-4 bg-[#faf6f2]/70 border border-[#e8d0d4]/40 text-[#3d2c2e] text-sm focus:bg-white outline-none resize-none transition-all duration-300 rounded-2xl placeholder:text-[#bfa5a9] focus:border-[#c9a0a8] focus:ring-2 focus:ring-[#c9a0a8]/20 mb-8"
+                    className="w-full min-h-[132px] p-4 bg-[#faf6f2]/70 border border-[#e8d0d4]/40 text-[#3d2c2e] text-sm focus:bg-white outline-none resize-none transition-all duration-300 ease-out rounded-2xl placeholder:text-[#bfa5a9] hover:border-[#d4adb5] focus:border-[#c9a0a8] focus:ring-2 focus:ring-[#c9a0a8]/20 mb-8"
                     placeholder={currentStep.placeholder}
                     value={answers[currentStep.id] || ''}
                     onChange={event => setAnswers(prev => ({ ...prev, [currentStep.id]: event.target.value }))}
@@ -847,7 +850,7 @@ export default function App() {
                   <div className="flex flex-col sm:flex-row items-center justify-center gap-5 w-full">
                     <motion.button
                       type="button"
-                      className="w-full sm:w-auto min-w-[210px] px-9 py-3.5 bg-[#c9a0a8] text-white rounded-full text-xs uppercase tracking-[0.2em] font-outfit font-bold shadow-[0_6px_20px_rgba(201,160,168,0.18)] hover:shadow-[0_8px_28px_rgba(201,160,168,0.26)] cursor-pointer disabled:opacity-45 disabled:cursor-not-allowed focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#c9a0a8]"
+                      className="w-full sm:w-auto min-w-[210px] px-9 py-3.5 bg-[#c9a0a8] text-white rounded-full text-xs uppercase tracking-[0.2em] font-outfit font-bold shadow-[0_6px_20px_rgba(201,160,168,0.18)] hover:shadow-[0_8px_28px_rgba(201,160,168,0.26)] transition-shadow duration-300 ease-out cursor-pointer disabled:opacity-45 disabled:cursor-not-allowed focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#c9a0a8]"
                       disabled={isActionDisabled}
                       animate={{ x: buttonOffset.x, y: buttonOffset.y }}
                       transition={{ duration: 0.75, ease: 'easeInOut' }}
@@ -864,7 +867,7 @@ export default function App() {
                     {currentStep.kind === 'choice' && (
                       <motion.button
                         type="button"
-                        className="w-full sm:w-auto min-w-[170px] px-8 py-3.5 rounded-full border border-[#e8d0d4]/30 bg-[#f5ede8]/60 text-[#5a3d42] font-sans text-sm cursor-pointer hover:bg-[#f0e0e3]/80 focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#c9a0a8]"
+                        className="w-full sm:w-auto min-w-[170px] px-8 py-3.5 rounded-full border border-[#e8d0d4]/30 bg-[#f5ede8]/60 text-[#5a3d42] font-sans text-sm cursor-pointer hover:bg-[#f0e0e3]/80 transition-colors duration-300 ease-out focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#c9a0a8]"
                         animate={{ x: noOffset.x, y: noOffset.y }}
                         transition={{ duration: 0.5, ease: 'easeOut' }}
                         onMouseEnter={moveNoButton}
