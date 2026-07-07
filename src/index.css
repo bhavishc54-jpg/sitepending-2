@@ -5,20 +5,19 @@
   --font-sans: "Lora", serif;
   --font-display: "Playfair Display", serif;
   --font-outfit: "Outfit", sans-serif;
-  
-  --color-brand-dark: #1a050d;
-  --color-brand-light: #fff0f3;
-  --color-brand-pink: #ff4d6d;
-  --color-brand-blush: #ff85a1;
-  --color-brand-rose: #ffb3c1;
-  
-  /* Fallback override overrides for standard classes */
-  --color-pink-50: #1a050d;
-  --color-pink-100: #ffd6e7;
-  --color-pink-200: #ffb6d3;
-  --color-pink-300: #ff8fbf;
-  --color-pink-400: #ff4d6d;
-  --color-pink-500: #8b1a4a;
+
+  --color-brand-dark: #faf6f2;
+  --color-brand-light: #3d2c2e;
+  --color-brand-pink: #c9a0a8;
+  --color-brand-blush: #d4adb5;
+  --color-brand-rose: #e8c8ce;
+
+  --color-pink-50: #fdf5f6;
+  --color-pink-100: #f5e1e5;
+  --color-pink-200: #d4adb5;
+  --color-pink-300: #c9a0a8;
+  --color-pink-400: #b8868f;
+  --color-pink-500: #8a6068;
 }
 
 @keyframes shimmer {
@@ -33,7 +32,7 @@
 @keyframes pfall {
   0% {
     transform: translateY(-20px) rotate(0deg);
-    opacity: 0.4;
+    opacity: 0.25;
   }
   100% {
     transform: translateY(110vh) rotate(360deg);
@@ -45,24 +44,23 @@
   position: absolute;
   width: 12px;
   height: 12px;
-  background: #ff85a1;
+  background: #d4adb5;
   border-radius: 50% 0 50% 50%;
-  opacity: 0.3;
+  opacity: 0.25;
   animation: pfall 12s linear infinite;
   pointer-events: none;
 }
 
-/* Scrollbar styling for a high-end feel */
 ::-webkit-scrollbar {
   width: 6px;
 }
 ::-webkit-scrollbar-track {
-  background: rgba(26, 5, 13, 0.7);
+  background: rgba(250, 246, 242, 0.9);
 }
 ::-webkit-scrollbar-thumb {
-  background: rgba(255, 133, 161, 0.3);
+  background: rgba(201, 160, 168, 0.35);
   border-radius: 10px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(255, 133, 161, 0.55);
+  background: rgba(201, 160, 168, 0.55);
 }

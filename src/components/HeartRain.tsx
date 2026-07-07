@@ -39,13 +39,13 @@ export function HeartRain() {
 
     const heartSymbols = ['💖', '💕', '💗', '💓', '💞', '💘', '❤️', '🌸', '✨'];
     const colors = [
-      '#ff4d6d', // sweet pink
-      '#ff758f', // warm rose
-      '#ff85a1', // soft blush
-      '#f7cad0', // pale pink
-      '#ffd6e7', // lavender pink
-      '#ffb3c1', // baby pink
-      '#fff0f3', // sweet cream
+      '#c9a0a8', // dusty rose
+      '#d4adb5', // soft blush
+      '#dbb8bf', // warm rose
+      '#e8c8ce', // pale pink
+      '#f0dde0', // lavender pink
+      '#e0c0c6', // muted rose
+      '#f5e1e5', // cream blush
     ];
 
     const hearts: Heart[] = [];
@@ -112,7 +112,7 @@ export function HeartRain() {
         ctx.font = `${h.size}px sans-serif`;
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
-        ctx.shadowColor = 'rgba(255, 77, 109, 0.3)';
+        ctx.shadowColor = 'rgba(201, 160, 168, 0.25)';
         ctx.shadowBlur = 6;
         ctx.fillText(h.symbol, 0, 0);
 
@@ -134,7 +134,7 @@ export function HeartRain() {
     <canvas
       ref={canvasRef}
       className="fixed inset-0 pointer-events-none z-[9999] w-full h-full"
-      style={{ mixBlendMode: 'screen' }}
+      style={{ mixBlendMode: 'normal' }}
     />
   );
 }

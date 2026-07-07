@@ -519,13 +519,13 @@ export default function App() {
     const isSignup = authMode === 'signup';
 
     return (
-      <div className="min-h-screen bg-[#1a050d] text-[#fff0f3] selection:bg-pink-400/30 selection:text-white overflow-x-hidden relative font-sans">
+      <div className="min-h-screen bg-[#faf6f2] text-[#3d2c2e] selection:bg-pink-300/20 selection:text-[#3d2c2e] overflow-x-hidden relative font-sans">
         <BackgroundHearts />
         <RomanticParticleCanvas />
 
         <div className="fixed inset-0 pointer-events-none overflow-hidden z-0">
-          <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_20%,rgba(255,77,109,0.16),transparent_34%),linear-gradient(180deg,#1a050d_0%,#2c0b17_48%,#110208_100%)]" />
-          <div className="absolute inset-0 opacity-[0.05] bg-[url('https://www.transparenttextures.com/patterns/stardust.png')]" />
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_20%,rgba(201,160,168,0.1),transparent_34%),linear-gradient(180deg,#faf6f2_0%,#f5ede8_48%,#faf6f2_100%)]" />
+          <div className="absolute inset-0 opacity-[0.03] bg-[url('https://www.transparenttextures.com/patterns/stardust.png')]" />
           {petals.map(p => (
             <span
               key={p.id}
@@ -543,36 +543,36 @@ export default function App() {
 
         <main className="relative z-10 min-h-screen w-full max-w-xl mx-auto px-4 py-16 flex items-center justify-center">
           <motion.section
-            className="w-full rounded-2xl bg-white/5 backdrop-blur-xl border border-white/10 p-6 sm:p-8 shadow-[0_15px_45px_rgba(0,0,0,0.5)] text-center relative overflow-hidden"
+            className="w-full rounded-2xl bg-white/80 backdrop-blur-xl border border-[#e8d0d4]/40 p-6 sm:p-8 shadow-[0_8px_32px_rgba(140,100,110,0.1)] text-center relative overflow-hidden"
             initial={{ opacity: 0, y: 18, scale: 0.98 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             transition={{ duration: 0.45, ease: 'easeOut' }}
           >
-            <div className="absolute inset-0 pointer-events-none bg-[radial-gradient(circle_at_20%_0%,rgba(255,133,161,0.16),transparent_28%),radial-gradient(circle_at_80%_100%,rgba(255,214,231,0.08),transparent_30%)]" />
+            <div className="absolute inset-0 pointer-events-none bg-[radial-gradient(circle_at_20%_0%,rgba(212,173,181,0.12),transparent_28%),radial-gradient(circle_at_80%_100%,rgba(232,200,206,0.08),transparent_30%)]" />
 
             <div className="relative">
-              <p className="font-outfit uppercase tracking-[0.32em] text-[10px] text-pink-300/65 font-bold mb-4">
+              <p className="font-outfit uppercase tracking-[0.32em] text-[10px] text-pink-400/70 font-bold mb-4">
                 Your private little space
               </p>
-              <h1 className="font-display font-light italic text-3xl sm:text-4xl leading-tight tracking-tight mb-4">
-                {authMode === 'forgot' ? 'Let’s find your way back' : authMode === 'reset' ? 'Choose a new password' : isSignup ? 'Create your little space' : 'Welcome back'}
+              <h1 className="font-display font-light italic text-3xl sm:text-4xl leading-tight tracking-tight mb-4 text-[#3d2c2e]">
+                {authMode === 'forgot' ? "Let's find your way back" : authMode === 'reset' ? 'Choose a new password' : isSignup ? 'Create your little space' : 'Welcome back'}
               </h1>
-              <p className="text-sm sm:text-base leading-relaxed text-pink-100/82 max-w-md mx-auto mb-7">
+              <p className="text-sm sm:text-base leading-relaxed text-[#7a5a5e] max-w-md mx-auto mb-7">
                 {authMode === 'forgot'
-                  ? 'Share your email and we’ll send a gentle link to reset it.'
+                  ? "Share your email and we'll send a gentle link to reset it."
                   : authMode === 'reset'
                     ? 'Choose a new password to keep your space safe.'
                     : isSignup
-                      ? 'Make a little space of your own, then sign in whenever you’re ready.'
+                      ? "Make a little space of your own, then sign in whenever you're ready."
                       : 'Sign in softly to step back into your space.'}
               </p>
 
               {(authMode === 'login' || authMode === 'signup') && (
-                <div className="grid grid-cols-2 gap-2 rounded-full border border-white/10 bg-white/5 p-1 mb-6">
+                <div className="grid grid-cols-2 gap-2 rounded-full border border-[#e8d0d4]/30 bg-[#f5ede8]/60 p-1 mb-6">
                   <button
                     type="button"
                     className={`rounded-full px-4 py-2 text-xs font-outfit font-bold uppercase tracking-[0.18em] transition-colors ${
-                      !isSignup ? 'bg-white text-[#1a050d]' : 'text-pink-100 hover:bg-white/10'
+                      !isSignup ? 'bg-[#c9a0a8] text-white' : 'text-[#7a5a5e] hover:bg-[#f0e0e3]/60'
                     }`}
                     aria-pressed={!isSignup}
                     onClick={() => {
@@ -585,7 +585,7 @@ export default function App() {
                   <button
                     type="button"
                     className={`rounded-full px-4 py-2 text-xs font-outfit font-bold uppercase tracking-[0.18em] transition-colors ${
-                      isSignup ? 'bg-white text-[#1a050d]' : 'text-pink-100 hover:bg-white/10'
+                      isSignup ? 'bg-[#c9a0a8] text-white' : 'text-[#7a5a5e] hover:bg-[#f0e0e3]/60'
                     }`}
                     aria-pressed={isSignup}
                     onClick={() => {
@@ -600,10 +600,10 @@ export default function App() {
 
               {isSignup ? (
                 <form className="grid gap-4 text-left" onSubmit={handleSignup}>
-                  <label className="grid gap-2 text-xs font-outfit font-bold uppercase tracking-[0.18em] text-pink-200/75">
+                  <label className="grid gap-2 text-xs font-outfit font-bold uppercase tracking-[0.18em] text-[#8a6068]">
                     Name
                     <input
-                      className="w-full p-4 bg-white/5 border border-white/10 text-[#fff0f3] text-sm font-sans normal-case tracking-normal focus:bg-white/10 outline-none transition-all duration-300 rounded-xl placeholder:text-white/25 focus:border-pink-300 focus:ring-2 focus:ring-pink-300/25"
+                      className="w-full p-4 bg-[#faf6f2]/70 border border-[#e8d0d4]/40 text-[#3d2c2e] text-sm font-sans normal-case tracking-normal focus:bg-white outline-none transition-all duration-300 rounded-xl placeholder:text-[#bfa5a9] focus:border-[#c9a0a8] focus:ring-2 focus:ring-[#c9a0a8]/20"
                       type="text"
                       autoComplete="name"
                       value={signupForm.name}
@@ -611,10 +611,10 @@ export default function App() {
                       required
                     />
                   </label>
-                  <label className="grid gap-2 text-xs font-outfit font-bold uppercase tracking-[0.18em] text-pink-200/75">
+                  <label className="grid gap-2 text-xs font-outfit font-bold uppercase tracking-[0.18em] text-[#8a6068]">
                     Email
                     <input
-                      className="w-full p-4 bg-white/5 border border-white/10 text-[#fff0f3] text-sm font-sans normal-case tracking-normal focus:bg-white/10 outline-none transition-all duration-300 rounded-xl placeholder:text-white/25 focus:border-pink-300 focus:ring-2 focus:ring-pink-300/25"
+                      className="w-full p-4 bg-[#faf6f2]/70 border border-[#e8d0d4]/40 text-[#3d2c2e] text-sm font-sans normal-case tracking-normal focus:bg-white outline-none transition-all duration-300 rounded-xl placeholder:text-[#bfa5a9] focus:border-[#c9a0a8] focus:ring-2 focus:ring-[#c9a0a8]/20"
                       type="email"
                       autoComplete="email"
                       value={signupForm.email}
@@ -622,10 +622,10 @@ export default function App() {
                       required
                     />
                   </label>
-                  <label className="grid gap-2 text-xs font-outfit font-bold uppercase tracking-[0.18em] text-pink-200/75">
+                  <label className="grid gap-2 text-xs font-outfit font-bold uppercase tracking-[0.18em] text-[#8a6068]">
                     Phone
                     <input
-                      className="w-full p-4 bg-white/5 border border-white/10 text-[#fff0f3] text-sm font-sans normal-case tracking-normal focus:bg-white/10 outline-none transition-all duration-300 rounded-xl placeholder:text-white/25 focus:border-pink-300 focus:ring-2 focus:ring-pink-300/25"
+                      className="w-full p-4 bg-[#faf6f2]/70 border border-[#e8d0d4]/40 text-[#3d2c2e] text-sm font-sans normal-case tracking-normal focus:bg-white outline-none transition-all duration-300 rounded-xl placeholder:text-[#bfa5a9] focus:border-[#c9a0a8] focus:ring-2 focus:ring-[#c9a0a8]/20"
                       type="tel"
                       autoComplete="tel"
                       value={signupForm.phone}
@@ -633,10 +633,10 @@ export default function App() {
                       required
                     />
                   </label>
-                  <label className="grid gap-2 text-xs font-outfit font-bold uppercase tracking-[0.18em] text-pink-200/75">
+                  <label className="grid gap-2 text-xs font-outfit font-bold uppercase tracking-[0.18em] text-[#8a6068]">
                     Password
                     <input
-                      className="w-full p-4 bg-white/5 border border-white/10 text-[#fff0f3] text-sm font-sans normal-case tracking-normal focus:bg-white/10 outline-none transition-all duration-300 rounded-xl placeholder:text-white/25 focus:border-pink-300 focus:ring-2 focus:ring-pink-300/25"
+                      className="w-full p-4 bg-[#faf6f2]/70 border border-[#e8d0d4]/40 text-[#3d2c2e] text-sm font-sans normal-case tracking-normal focus:bg-white outline-none transition-all duration-300 rounded-xl placeholder:text-[#bfa5a9] focus:border-[#c9a0a8] focus:ring-2 focus:ring-[#c9a0a8]/20"
                       type="password"
                       autoComplete="new-password"
                       value={signupForm.password}
@@ -646,7 +646,7 @@ export default function App() {
                   </label>
                   <button
                     type="submit"
-                    className="w-full mt-2 px-9 py-3.5 bg-white text-[#1a050d] rounded-full text-xs uppercase tracking-[0.2em] font-outfit font-bold shadow-[0_10px_30px_rgba(255,255,255,0.08)] hover:shadow-[0_10px_35px_rgba(255,77,109,0.3)] cursor-pointer disabled:opacity-45 disabled:cursor-not-allowed focus-visible:outline focus-visible:outline-2 focus-visible:outline-pink-200"
+                    className="w-full mt-2 px-9 py-3.5 bg-[#c9a0a8] text-white rounded-full text-xs uppercase tracking-[0.2em] font-outfit font-bold shadow-[0_4px_16px_rgba(201,160,168,0.25)] hover:shadow-[0_6px_24px_rgba(201,160,168,0.35)] cursor-pointer disabled:opacity-45 disabled:cursor-not-allowed focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#c9a0a8]"
                     disabled={authStatus === 'loading'}
                   >
                     {authStatus === 'loading' ? 'Creating your space…' : 'Create my space'}
@@ -654,10 +654,10 @@ export default function App() {
                 </form>
               ) : authMode === 'login' ? (
                 <form className="grid gap-4 text-left" onSubmit={handleLogin}>
-                  <label className="grid gap-2 text-xs font-outfit font-bold uppercase tracking-[0.18em] text-pink-200/75">
+                  <label className="grid gap-2 text-xs font-outfit font-bold uppercase tracking-[0.18em] text-[#8a6068]">
                     Email
                     <input
-                      className="w-full p-4 bg-white/5 border border-white/10 text-[#fff0f3] text-sm font-sans normal-case tracking-normal focus:bg-white/10 outline-none transition-all duration-300 rounded-xl placeholder:text-white/25 focus:border-pink-300 focus:ring-2 focus:ring-pink-300/25"
+                      className="w-full p-4 bg-[#faf6f2]/70 border border-[#e8d0d4]/40 text-[#3d2c2e] text-sm font-sans normal-case tracking-normal focus:bg-white outline-none transition-all duration-300 rounded-xl placeholder:text-[#bfa5a9] focus:border-[#c9a0a8] focus:ring-2 focus:ring-[#c9a0a8]/20"
                       type="email"
                       autoComplete="email"
                       value={loginForm.email}
@@ -665,10 +665,10 @@ export default function App() {
                       required
                     />
                   </label>
-                  <label className="grid gap-2 text-xs font-outfit font-bold uppercase tracking-[0.18em] text-pink-200/75">
+                  <label className="grid gap-2 text-xs font-outfit font-bold uppercase tracking-[0.18em] text-[#8a6068]">
                     Password
                     <input
-                      className="w-full p-4 bg-white/5 border border-white/10 text-[#fff0f3] text-sm font-sans normal-case tracking-normal focus:bg-white/10 outline-none transition-all duration-300 rounded-xl placeholder:text-white/25 focus:border-pink-300 focus:ring-2 focus:ring-pink-300/25"
+                      className="w-full p-4 bg-[#faf6f2]/70 border border-[#e8d0d4]/40 text-[#3d2c2e] text-sm font-sans normal-case tracking-normal focus:bg-white outline-none transition-all duration-300 rounded-xl placeholder:text-[#bfa5a9] focus:border-[#c9a0a8] focus:ring-2 focus:ring-[#c9a0a8]/20"
                       type="password"
                       autoComplete="current-password"
                       value={loginForm.password}
@@ -678,14 +678,14 @@ export default function App() {
                   </label>
                   <button
                     type="submit"
-                    className="w-full mt-2 px-9 py-3.5 bg-white text-[#1a050d] rounded-full text-xs uppercase tracking-[0.2em] font-outfit font-bold shadow-[0_10px_30px_rgba(255,255,255,0.08)] hover:shadow-[0_10px_35px_rgba(255,77,109,0.3)] cursor-pointer disabled:opacity-45 disabled:cursor-not-allowed focus-visible:outline focus-visible:outline-2 focus-visible:outline-pink-200"
+                    className="w-full mt-2 px-9 py-3.5 bg-[#c9a0a8] text-white rounded-full text-xs uppercase tracking-[0.2em] font-outfit font-bold shadow-[0_4px_16px_rgba(201,160,168,0.25)] hover:shadow-[0_6px_24px_rgba(201,160,168,0.35)] cursor-pointer disabled:opacity-45 disabled:cursor-not-allowed focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#c9a0a8]"
                     disabled={authStatus === 'loading'}
                   >
                     {authStatus === 'loading' ? 'Opening…' : 'Step inside'}
                   </button>
                   <button
                     type="button"
-                    className="mt-1 text-xs text-pink-200/60 hover:text-pink-100 transition-colors cursor-pointer text-center"
+                    className="mt-1 text-xs text-[#b8868f]/70 hover:text-[#8a6068] transition-colors cursor-pointer text-center"
                     onClick={() => { setAuthMode('forgot'); setAuthMessage(''); }}
                   >
                     Forgot your password? It happens 💌
@@ -693,10 +693,10 @@ export default function App() {
                 </form>
               ) : authMode === 'forgot' ? (
                 <form className="grid gap-4 text-left" onSubmit={handleForgotPassword}>
-                  <label className="grid gap-2 text-xs font-outfit font-bold uppercase tracking-[0.18em] text-pink-200/75">
+                  <label className="grid gap-2 text-xs font-outfit font-bold uppercase tracking-[0.18em] text-[#8a6068]">
                     Email
                     <input
-                      className="w-full p-4 bg-white/5 border border-white/10 text-[#fff0f3] text-sm font-sans normal-case tracking-normal focus:bg-white/10 outline-none transition-all duration-300 rounded-xl placeholder:text-white/25 focus:border-pink-300 focus:ring-2 focus:ring-pink-300/25"
+                      className="w-full p-4 bg-[#faf6f2]/70 border border-[#e8d0d4]/40 text-[#3d2c2e] text-sm font-sans normal-case tracking-normal focus:bg-white outline-none transition-all duration-300 rounded-xl placeholder:text-[#bfa5a9] focus:border-[#c9a0a8] focus:ring-2 focus:ring-[#c9a0a8]/20"
                       type="email"
                       autoComplete="email"
                       value={forgotEmail}
@@ -706,14 +706,14 @@ export default function App() {
                   </label>
                   <button
                     type="submit"
-                    className="w-full mt-2 px-9 py-3.5 bg-white text-[#1a050d] rounded-full text-xs uppercase tracking-[0.2em] font-outfit font-bold shadow-[0_10px_30px_rgba(255,255,255,0.08)] hover:shadow-[0_10px_35px_rgba(255,77,109,0.3)] cursor-pointer disabled:opacity-45 disabled:cursor-not-allowed focus-visible:outline focus-visible:outline-2 focus-visible:outline-pink-200"
+                    className="w-full mt-2 px-9 py-3.5 bg-[#c9a0a8] text-white rounded-full text-xs uppercase tracking-[0.2em] font-outfit font-bold shadow-[0_4px_16px_rgba(201,160,168,0.25)] hover:shadow-[0_6px_24px_rgba(201,160,168,0.35)] cursor-pointer disabled:opacity-45 disabled:cursor-not-allowed focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#c9a0a8]"
                     disabled={authStatus === 'loading'}
                   >
                     {authStatus === 'loading' ? 'Sending…' : 'Send my reset link'}
                   </button>
                   <button
                     type="button"
-                    className="mt-1 text-xs text-pink-200/60 hover:text-pink-100 transition-colors cursor-pointer text-center"
+                    className="mt-1 text-xs text-[#b8868f]/70 hover:text-[#8a6068] transition-colors cursor-pointer text-center"
                     onClick={() => { setAuthMode('login'); setAuthMessage(''); }}
                   >
                     Back to sign in
@@ -721,10 +721,10 @@ export default function App() {
                 </form>
               ) : authMode === 'reset' ? (
                 <form className="grid gap-4 text-left" onSubmit={handleResetPassword}>
-                  <label className="grid gap-2 text-xs font-outfit font-bold uppercase tracking-[0.18em] text-pink-200/75">
+                  <label className="grid gap-2 text-xs font-outfit font-bold uppercase tracking-[0.18em] text-[#8a6068]">
                     New Password
                     <input
-                      className="w-full p-4 bg-white/5 border border-white/10 text-[#fff0f3] text-sm font-sans normal-case tracking-normal focus:bg-white/10 outline-none transition-all duration-300 rounded-xl placeholder:text-white/25 focus:border-pink-300 focus:ring-2 focus:ring-pink-300/25"
+                      className="w-full p-4 bg-[#faf6f2]/70 border border-[#e8d0d4]/40 text-[#3d2c2e] text-sm font-sans normal-case tracking-normal focus:bg-white outline-none transition-all duration-300 rounded-xl placeholder:text-[#bfa5a9] focus:border-[#c9a0a8] focus:ring-2 focus:ring-[#c9a0a8]/20"
                       type="password"
                       autoComplete="new-password"
                       value={resetPassword}
@@ -734,7 +734,7 @@ export default function App() {
                   </label>
                   <button
                     type="submit"
-                    className="w-full mt-2 px-9 py-3.5 bg-white text-[#1a050d] rounded-full text-xs uppercase tracking-[0.2em] font-outfit font-bold shadow-[0_10px_30px_rgba(255,255,255,0.08)] hover:shadow-[0_10px_35px_rgba(255,77,109,0.3)] cursor-pointer disabled:opacity-45 disabled:cursor-not-allowed focus-visible:outline focus-visible:outline-2 focus-visible:outline-pink-200"
+                    className="w-full mt-2 px-9 py-3.5 bg-[#c9a0a8] text-white rounded-full text-xs uppercase tracking-[0.2em] font-outfit font-bold shadow-[0_4px_16px_rgba(201,160,168,0.25)] hover:shadow-[0_6px_24px_rgba(201,160,168,0.35)] cursor-pointer disabled:opacity-45 disabled:cursor-not-allowed focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#c9a0a8]"
                     disabled={authStatus === 'loading'}
                   >
                     {authStatus === 'loading' ? 'Saving…' : 'Save new password'}
@@ -743,7 +743,7 @@ export default function App() {
               ) : null}
 
               {authMessage && (
-                <p className="mt-5 rounded-xl border border-pink-200/20 bg-white/5 px-4 py-3 text-center text-sm text-pink-100" role="status" aria-live="polite">
+                <p className="mt-5 rounded-xl border border-[#e8d0d4]/40 bg-[#fdf5f6] px-4 py-3 text-center text-sm text-[#5a3d42]" role="status" aria-live="polite">
                   {authMessage}
                 </p>
               )}
@@ -751,7 +751,7 @@ export default function App() {
           </motion.section>
         </main>
 
-        <footer className="relative z-10 w-full text-center text-[10px] text-pink-300/30 font-sans pb-6 select-none pointer-events-none uppercase tracking-widest font-bold">
+        <footer className="relative z-10 w-full text-center text-[10px] text-[#c9a0a8]/50 font-sans pb-6 select-none pointer-events-none uppercase tracking-widest font-bold">
           Copyright © 2026 Bhavish. All Rights Reserved.
         </footer>
       </div>
@@ -759,15 +759,15 @@ export default function App() {
   }
 
   return (
-    <div className="min-h-screen bg-[#1a050d] text-[#fff0f3] selection:bg-pink-400/30 selection:text-white overflow-x-hidden relative font-sans">
+    <div className="min-h-screen bg-[#faf6f2] text-[#3d2c2e] selection:bg-pink-300/20 selection:text-[#3d2c2e] overflow-x-hidden relative font-sans">
       <audio ref={audioRef} id="bgm" src={MUSIC_SRC} loop preload="auto" />
       <BackgroundHearts />
       <RomanticParticleCanvas />
       {isComplete && <HeartRain />}
 
       <div className="fixed inset-0 pointer-events-none overflow-hidden z-0">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_20%,rgba(255,77,109,0.16),transparent_34%),linear-gradient(180deg,#1a050d_0%,#2c0b17_48%,#110208_100%)]" />
-        <div className="absolute inset-0 opacity-[0.05] bg-[url('https://www.transparenttextures.com/patterns/stardust.png')]" />
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_20%,rgba(201,160,168,0.1),transparent_34%),linear-gradient(180deg,#faf6f2_0%,#f5ede8_48%,#faf6f2_100%)]" />
+        <div className="absolute inset-0 opacity-[0.03] bg-[url('https://www.transparenttextures.com/patterns/stardust.png')]" />
         {petals.map(p => (
           <span
             key={p.id}
@@ -784,7 +784,7 @@ export default function App() {
       </div>
 
       <button
-        className="fixed bottom-4 right-4 z-50 px-4 py-2 rounded-full border border-white/15 bg-white/5 backdrop-blur-md flex items-center gap-2 text-xs font-sans font-semibold text-[#fff0f3] opacity-80 hover:opacity-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-pink-200 transition-opacity cursor-pointer shadow-[0_4px_20px_rgba(0,0,0,0.3)]"
+        className="fixed bottom-4 right-4 z-50 px-4 py-2 rounded-full border border-[#e8d0d4]/30 bg-white/70 backdrop-blur-md flex items-center gap-2 text-xs font-sans font-semibold text-[#3d2c2e] opacity-80 hover:opacity-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#c9a0a8] transition-opacity cursor-pointer shadow-[0_2px_12px_rgba(140,100,110,0.1)]"
         type="button"
         aria-label={musicOn ? 'Turn background music off' : 'Turn background music on'}
         aria-pressed={musicOn}
@@ -794,7 +794,7 @@ export default function App() {
       </button>
 
       {musicError && (
-        <p className="fixed bottom-16 right-4 z-50 max-w-[260px] rounded-xl border border-pink-200/20 bg-[#1a050d]/85 px-4 py-3 text-xs text-pink-100 shadow-xl backdrop-blur-md">
+        <p className="fixed bottom-16 right-4 z-50 max-w-[260px] rounded-xl border border-[#e8d0d4]/40 bg-white/90 px-4 py-3 text-xs text-[#5a3d42] shadow-xl backdrop-blur-md">
           {musicError}
         </p>
       )}
@@ -811,16 +811,16 @@ export default function App() {
           {!isComplete ? (
             <motion.section
               key={currentStep.id}
-              className="w-full rounded-2xl bg-white/5 backdrop-blur-xl border border-white/10 p-6 sm:p-8 shadow-[0_15px_45px_rgba(0,0,0,0.5)] text-center relative overflow-hidden"
+              className="w-full rounded-2xl bg-white/80 backdrop-blur-xl border border-[#e8d0d4]/40 p-6 sm:p-8 shadow-[0_8px_32px_rgba(140,100,110,0.1)] text-center relative overflow-hidden"
               initial={{ opacity: 0, y: 18, scale: 0.98 }}
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, y: -18, scale: 0.98 }}
               transition={{ duration: 0.45, ease: 'easeOut' }}
             >
-              <div className="absolute inset-0 pointer-events-none bg-[radial-gradient(circle_at_20%_0%,rgba(255,133,161,0.16),transparent_28%),radial-gradient(circle_at_80%_100%,rgba(255,214,231,0.08),transparent_30%)]" />
+              <div className="absolute inset-0 pointer-events-none bg-[radial-gradient(circle_at_20%_0%,rgba(212,173,181,0.12),transparent_28%),radial-gradient(circle_at_80%_100%,rgba(232,200,206,0.08),transparent_30%)]" />
 
               <div className="relative">
-                <p className="font-outfit uppercase tracking-[0.32em] text-[10px] text-pink-300/65 font-bold mb-4">
+                <p className="font-outfit uppercase tracking-[0.32em] text-[10px] text-pink-400/70 font-bold mb-4">
                   Step {String(stepIndex + 1).padStart(2, '0')} of {STEPS.length}
                 </p>
 
@@ -828,7 +828,7 @@ export default function App() {
                   {currentStep.title}
                 </h1>
 
-                <p className="text-sm sm:text-base leading-relaxed text-pink-100/82 max-w-md mx-auto mb-7">
+                <p className="text-sm sm:text-base leading-relaxed text-[#7a5a5e] max-w-md mx-auto mb-7">
                   {currentStep.note}
                 </p>
 
@@ -836,7 +836,7 @@ export default function App() {
                   <textarea
                     ref={typing.ref}
                     onInput={typing.handleInput}
-                    className="w-full min-h-[132px] p-4 bg-white/5 border border-white/10 text-[#fff0f3] text-sm focus:bg-white/10 outline-none resize-none transition-all duration-300 rounded-xl placeholder:text-white/25 focus:border-pink-300 focus:ring-2 focus:ring-pink-300/25 mb-6"
+                    className="w-full min-h-[132px] p-4 bg-[#faf6f2]/70 border border-[#e8d0d4]/40 text-[#3d2c2e] text-sm focus:bg-white outline-none resize-none transition-all duration-300 rounded-xl placeholder:text-[#bfa5a9] focus:border-[#c9a0a8] focus:ring-2 focus:ring-[#c9a0a8]/20 mb-6"
                     placeholder={currentStep.placeholder}
                     value={answers[currentStep.id] || ''}
                     onChange={event => setAnswers(prev => ({ ...prev, [currentStep.id]: event.target.value }))}
@@ -847,7 +847,7 @@ export default function App() {
                   <div className="flex flex-col sm:flex-row items-center justify-center gap-4 w-full">
                     <motion.button
                       type="button"
-                      className="w-full sm:w-auto min-w-[210px] px-9 py-3.5 bg-white text-[#1a050d] rounded-full text-xs uppercase tracking-[0.2em] font-outfit font-bold shadow-[0_10px_30px_rgba(255,255,255,0.08)] hover:shadow-[0_10px_35px_rgba(255,77,109,0.3)] cursor-pointer disabled:opacity-45 disabled:cursor-not-allowed focus-visible:outline focus-visible:outline-2 focus-visible:outline-pink-200"
+                      className="w-full sm:w-auto min-w-[210px] px-9 py-3.5 bg-[#c9a0a8] text-white rounded-full text-xs uppercase tracking-[0.2em] font-outfit font-bold shadow-[0_4px_16px_rgba(201,160,168,0.25)] hover:shadow-[0_6px_24px_rgba(201,160,168,0.35)] cursor-pointer disabled:opacity-45 disabled:cursor-not-allowed focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#c9a0a8]"
                       disabled={isActionDisabled}
                       animate={{ x: buttonOffset.x, y: buttonOffset.y }}
                       transition={{ duration: 0.75, ease: 'easeInOut' }}
@@ -864,7 +864,7 @@ export default function App() {
                     {currentStep.kind === 'choice' && (
                       <motion.button
                         type="button"
-                        className="w-full sm:w-auto min-w-[170px] px-8 py-3 rounded-full border border-white/20 bg-white/5 text-white/90 font-sans text-sm cursor-pointer hover:bg-white/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-pink-200"
+                        className="w-full sm:w-auto min-w-[170px] px-8 py-3 rounded-full border border-[#e8d0d4]/30 bg-[#f5ede8]/60 text-[#5a3d42] font-sans text-sm cursor-pointer hover:bg-[#f0e0e3]/80 focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#c9a0a8]"
                         animate={{ x: noOffset.x, y: noOffset.y }}
                         transition={{ duration: 0.5, ease: 'easeOut' }}
                         onMouseEnter={moveNoButton}
@@ -880,7 +880,7 @@ export default function App() {
                 </div>
 
                 {submitStatus === 'error' && (
-                  <p className="mt-3 text-xs text-rose-200">
+                  <p className="mt-3 text-xs text-[#b05a5a]">
                     I could not send the note right now. Please try the submit button again.
                   </p>
                 )}
@@ -889,16 +889,16 @@ export default function App() {
           ) : (
             <motion.section
               key="thank-you"
-              className="w-full rounded-2xl bg-gradient-to-br from-[#2c0b17] to-[#1a050d] border border-white/10 p-7 sm:p-9 text-center shadow-[0_15px_45px_rgba(0,0,0,0.5)] relative overflow-hidden"
+              className="w-full rounded-2xl bg-gradient-to-br from-[#fdf5f6] to-[#faf6f2] border border-[#e8d0d4]/40 p-7 sm:p-9 text-center shadow-[0_8px_32px_rgba(140,100,110,0.1)] relative overflow-hidden"
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.95 }}
               transition={{ duration: 0.6 }}
             >
               <div className="absolute inset-0 pointer-events-none opacity-50">
-                <div className="absolute top-[18%] left-[12%] w-1.5 h-1.5 bg-white rounded-full animate-ping" />
-                <div className="absolute top-[62%] right-[15%] w-1.5 h-1.5 bg-pink-200 rounded-full animate-ping" />
-                <div className="absolute bottom-[18%] left-[42%] w-1 h-1 bg-white rounded-full animate-pulse" />
+                <div className="absolute top-[18%] left-[12%] w-1.5 h-1.5 bg-[#c9a0a8] rounded-full animate-ping" />
+                <div className="absolute top-[62%] right-[15%] w-1.5 h-1.5 bg-[#d4adb5] rounded-full animate-ping" />
+                <div className="absolute bottom-[18%] left-[42%] w-1 h-1 bg-[#c9a0a8] rounded-full animate-pulse" />
               </div>
 
               <motion.div
@@ -910,21 +910,21 @@ export default function App() {
               </motion.div>
 
               <div className="relative max-w-md mx-auto">
-                <p className="font-outfit uppercase tracking-[0.32em] text-[10px] text-pink-300/65 font-bold mb-4">
+                <p className="font-outfit uppercase tracking-[0.32em] text-[10px] text-pink-400/70 font-bold mb-4">
                   Thank you letter
                 </p>
                 <h2 className="font-display font-light italic text-3xl sm:text-4xl mb-5 tracking-tight">
                   Thank you, my love
                 </h2>
 
-                <div className="space-y-4 text-sm sm:text-base leading-relaxed text-pink-100/90">
+                <div className="space-y-4 text-sm sm:text-base leading-relaxed text-[#5a3d42]/90">
                   <p>
                     Thank you for giving this little moment your time, your patience, and a piece of your heart.
                   </p>
                   <p>
                     I will keep loving you softly, listening to you carefully, and choosing us with honesty every day.
                   </p>
-                  <p className="font-display italic text-xl text-[#ffb3c1] pt-2">
+                  <p className="font-display italic text-xl text-[#b8868f] pt-2">
                     You are precious to me, always.
                   </p>
                 </div>
@@ -934,7 +934,7 @@ export default function App() {
         </AnimatePresence>
       </main>
 
-      <footer className="relative z-10 w-full text-center text-[10px] text-pink-300/30 font-sans pb-6 select-none pointer-events-none uppercase tracking-widest font-bold">
+      <footer className="relative z-10 w-full text-center text-[10px] text-[#c9a0a8]/50 font-sans pb-6 select-none pointer-events-none uppercase tracking-widest font-bold">
         Copyright © 2026 Bhavish. All Rights Reserved.
       </footer>
     </div>
