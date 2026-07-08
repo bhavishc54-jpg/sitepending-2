@@ -188,6 +188,32 @@ function getPlanLabel(profile: ProfileRow | null): string {
   return 'Free Plan';
 }
 
+type AccessTier = 'free' | 'basic' | 'premium';
+
+// Same priority order as getPlanLabel: admin and manual access count as premium.
+function getAccessTier(profile: ProfileRow | null): AccessTier {
+  if (!profile) return 'free';
+  if (profile.role === 'admin' || profile.manual_access) return 'premium';
+
+  const isActive = profile.plan_status === 'active';
+  const notExpired = !profile.plan_expires_at || new Date(profile.plan_expires_at).getTime() > Date.now();
+
+  if (isActive && notExpired) {
+    if (profile.plan === 'premium') return 'premium';
+    if (profile.plan === 'basic') return 'basic';
+  }
+
+  return 'free';
+}
+
+// Placeholder usage numbers for the drawer UI only — real usage tracking is
+// not built yet, so nothing here is read from or written to Supabase.
+const USAGE_BY_TIER: Record<AccessTier, { sites: string; edits: string; limit: string }> = {
+  free: { sites: '0 / 1', edits: '0 / 5', limit: '1 site · 5 edits' },
+  basic: { sites: '0 / 5', edits: '0 / 50', limit: '5 sites · 50 edits' },
+  premium: { sites: 'Unlimited', edits: 'Unlimited', limit: 'Unlimited' }
+};
+
 export default function App() {
   const savedState = useMemo<Record<string, any>>(() => {
     if (typeof window === 'undefined') return {};
@@ -228,6 +254,8 @@ export default function App() {
   const [resetPassword, setResetPassword] = useState('');
   const [profile, setProfile] = useState<ProfileRow | null>(null);
   const [resetAccessToken, setResetAccessToken] = useState('');
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [clockLabel, setClockLabel] = useState('');
   const audioRef = useRef<HTMLAudioElement>(null);
   const typing = useRomanticTyping<HTMLTextAreaElement>();
 
@@ -257,6 +285,35 @@ export default function App() {
       // The plan label just won't show if this fails; the dashboard itself is unaffected.
     }
   }, [isDashboardPage]);
+
+  useEffect(() => {
+    if (!menuOpen) return;
+
+    const updateClock = () =>
+      setClockLabel(new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }));
+
+    updateClock();
+    const intervalId = window.setInterval(updateClock, 30000);
+
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setMenuOpen(false);
+    };
+    window.addEventListener('keydown', onKeyDown);
+
+    return () => {
+      window.clearInterval(intervalId);
+      window.removeEventListener('keydown', onKeyDown);
+    };
+  }, [menuOpen]);
+
+  const handleLogout = () => {
+    try {
+      window.localStorage.removeItem(AUTH_STORAGE_KEY);
+    } catch {
+      // Redirecting still works; the dashboard guard fails closed either way.
+    }
+    window.location.replace('index.html');
+  };
 
   const currentStep = STEPS[Math.min(stepIndex, STEPS.length - 1)];
   const currentClicks = buttonClicks[currentStep.id] || 0;
@@ -576,6 +633,9 @@ export default function App() {
     submitStatus === 'sending' ||
     (currentStep.kind === 'textarea' && !(answers[currentStep.id] || '').trim());
 
+  const accessTier = getAccessTier(profile);
+  const usage = USAGE_BY_TIER[accessTier];
+
   if (!isDashboardPage) {
     const isSignup = authMode === 'signup';
 
@@ -862,6 +922,125 @@ export default function App() {
           {musicError}
         </p>
       )}
+
+      <button
+        type="button"
+        className="fixed left-4 top-28 sm:top-4 z-[60] flex h-10 w-10 flex-col items-center justify-center gap-[5px] rounded-full border border-white/15 bg-white/5 backdrop-blur-md opacity-80 hover:opacity-100 hover:-translate-y-0.5 focus-visible:outline focus-visible:outline-2 focus-visible:outline-pink-200 transition-all duration-300 ease-out cursor-pointer shadow-[0_4px_20px_rgba(0,0,0,0.3)]"
+        aria-label="Open account menu"
+        aria-expanded={menuOpen}
+        onClick={() => setMenuOpen(true)}
+      >
+        <span className="block h-[2px] w-4 rounded-full bg-[#fff0f3]" />
+        <span className="block h-[2px] w-4 rounded-full bg-[#fff0f3]" />
+        <span className="block h-[2px] w-4 rounded-full bg-[#fff0f3]" />
+      </button>
+
+      <AnimatePresence>
+        {menuOpen && (
+          <>
+            <motion.div
+              key="drawer-backdrop"
+              className="fixed inset-0 z-[70] bg-black/55 backdrop-blur-sm"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.3 }}
+              onClick={() => setMenuOpen(false)}
+            />
+            <motion.aside
+              key="drawer"
+              className="fixed left-0 top-0 z-[80] flex h-full w-[85%] max-w-sm flex-col overflow-y-auto rounded-r-[28px] border-r border-white/10 bg-gradient-to-b from-[#2c0b17] to-[#1a050d] p-7 shadow-[0_15px_45px_rgba(0,0,0,0.6)] backdrop-blur-xl"
+              role="dialog"
+              aria-label="Account menu"
+              initial={{ x: '-100%' }}
+              animate={{ x: 0 }}
+              exit={{ x: '-100%' }}
+              transition={{ duration: 0.35, ease: 'easeOut' }}
+            >
+              <div className="mb-7 flex items-center justify-between">
+                <p className="font-outfit uppercase tracking-[0.32em] text-[10px] text-pink-300/65 font-bold">
+                  Your Account
+                </p>
+                <button
+                  type="button"
+                  className="flex h-8 w-8 items-center justify-center rounded-full border border-white/15 bg-white/5 text-sm text-pink-100 hover:bg-white/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-pink-200 transition-colors duration-300 ease-out cursor-pointer"
+                  aria-label="Close account menu"
+                  onClick={() => setMenuOpen(false)}
+                >
+                  ✕
+                </button>
+              </div>
+
+              <span className="mb-8 inline-flex w-fit items-center gap-2 rounded-full border border-pink-200/25 bg-white/5 px-4 py-1.5 text-xs font-outfit font-semibold tracking-wide text-pink-100 shadow-[0_4px_16px_rgba(0,0,0,0.3)]">
+                {getPlanLabel(profile)}
+              </span>
+
+              <div className="mb-8">
+                <p className="mb-3 font-outfit uppercase tracking-[0.24em] text-[10px] text-pink-300/65 font-bold">
+                  Usage
+                </p>
+                <div className="grid gap-2.5 rounded-2xl border border-white/10 bg-white/5 p-5 text-sm text-pink-100/85">
+                  <div className="flex items-center justify-between gap-4">
+                    <span>Sites Created</span>
+                    <span className="font-semibold text-[#fff0f3]">{usage.sites}</span>
+                  </div>
+                  <div className="flex items-center justify-between gap-4">
+                    <span>Edits Used</span>
+                    <span className="font-semibold text-[#fff0f3]">{usage.edits}</span>
+                  </div>
+                  <div className="flex items-center justify-between gap-4">
+                    <span>Usage Limit</span>
+                    <span className="font-semibold text-[#fff0f3]">{usage.limit}</span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="mb-8">
+                <p className="mb-3 font-outfit uppercase tracking-[0.24em] text-[10px] text-pink-300/65 font-bold">
+                  Upgrade
+                </p>
+                {accessTier === 'premium' ? (
+                  <p className="rounded-2xl border border-pink-200/20 bg-white/5 px-5 py-3.5 text-sm text-pink-100">
+                    You already have premium access ✨
+                  </p>
+                ) : (
+                  <div className="grid gap-3">
+                    {accessTier === 'free' && (
+                      <button
+                        type="button"
+                        disabled
+                        className="w-full rounded-full border border-white/20 bg-white/5 px-8 py-3 text-xs font-outfit font-bold uppercase tracking-[0.18em] text-pink-100/70 cursor-not-allowed"
+                      >
+                        Upgrade to Basic · Coming soon
+                      </button>
+                    )}
+                    <button
+                      type="button"
+                      disabled
+                      className="w-full rounded-full bg-white/90 px-8 py-3 text-xs font-outfit font-bold uppercase tracking-[0.18em] text-[#1a050d] opacity-60 cursor-not-allowed"
+                    >
+                      Upgrade to Premium · Coming soon
+                    </button>
+                  </div>
+                )}
+              </div>
+
+              <div className="mt-auto grid gap-4 border-t border-white/10 pt-6">
+                <p className="text-xs text-pink-200/60">
+                  Session active · {clockLabel}
+                </p>
+                <button
+                  type="button"
+                  className="w-full rounded-full border border-pink-300/40 bg-white/5 px-8 py-3 text-xs font-outfit font-bold uppercase tracking-[0.18em] text-pink-100 hover:bg-pink-300/15 focus-visible:outline focus-visible:outline-2 focus-visible:outline-pink-200 transition-colors duration-300 ease-out cursor-pointer"
+                  onClick={handleLogout}
+                >
+                  Logout
+                </button>
+              </div>
+            </motion.aside>
+          </>
+        )}
+      </AnimatePresence>
 
       <LoveHeader
         currentQuestion={progressStep}
