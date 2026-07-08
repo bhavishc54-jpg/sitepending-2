@@ -206,13 +206,36 @@ function getAccessTier(profile: ProfileRow | null): AccessTier {
   return 'free';
 }
 
-// Placeholder usage numbers for the drawer UI only — real usage tracking is
-// not built yet, so nothing here is read from or written to Supabase.
-const USAGE_BY_TIER: Record<AccessTier, { sites: string; edits: string; limit: string }> = {
-  free: { sites: '0 / 1', edits: '0 / 5', limit: '1 site · 5 edits' },
-  basic: { sites: '0 / 5', edits: '0 / 50', limit: '5 sites · 50 edits' },
-  premium: { sites: 'Unlimited', edits: 'Unlimited', limit: 'Unlimited' }
+// Plan-based limits only. `null` means unlimited. Actual usage (how many the
+// user has used so far) comes from public.user_usage, fetched below.
+const PLAN_LIMITS: Record<AccessTier, { sites: number | null; edits: number | null }> = {
+  free: { sites: 1, edits: 5 },
+  basic: { sites: 5, edits: 50 },
+  premium: { sites: null, edits: null }
 };
+
+interface UsageRow {
+  sites_created: number;
+  edits_used: number;
+  monthly_reset_at: string | null;
+}
+
+async function fetchUsage(userId: string, accessToken: string): Promise<UsageRow | null> {
+  const response = await fetch(
+    `${SUPABASE_URL}/rest/v1/user_usage?user_id=eq.${userId}&select=sites_created,edits_used,monthly_reset_at`,
+    {
+      headers: {
+        apikey: SUPABASE_PUBLISHABLE_KEY,
+        Authorization: `Bearer ${accessToken}`
+      }
+    }
+  );
+
+  if (!response.ok) return null;
+
+  const rows = await response.json().catch(() => []);
+  return Array.isArray(rows) && rows.length > 0 ? rows[0] : null;
+}
 
 export default function App() {
   const savedState = useMemo<Record<string, any>>(() => {
@@ -253,6 +276,7 @@ export default function App() {
   const [forgotEmail, setForgotEmail] = useState('');
   const [resetPassword, setResetPassword] = useState('');
   const [profile, setProfile] = useState<ProfileRow | null>(null);
+  const [usageRow, setUsageRow] = useState<UsageRow | null>(null);
   const [resetAccessToken, setResetAccessToken] = useState('');
   const [menuOpen, setMenuOpen] = useState(false);
   const [clockLabel, setClockLabel] = useState('');
@@ -280,6 +304,12 @@ export default function App() {
 
       if (accessToken && userId) {
         fetchProfile(userId, accessToken).then(setProfile);
+        fetchUsage(userId, accessToken).then(row => {
+          if (!row) {
+            console.warn('[Usage] No user_usage row found for this user; showing 0 values.');
+          }
+          setUsageRow(row);
+        });
       }
     } catch {
       // The plan label just won't show if this fails; the dashboard itself is unaffected.
@@ -634,7 +664,17 @@ export default function App() {
     (currentStep.kind === 'textarea' && !(answers[currentStep.id] || '').trim());
 
   const accessTier = getAccessTier(profile);
-  const usage = USAGE_BY_TIER[accessTier];
+  const planLimits = PLAN_LIMITS[accessTier];
+  const sitesCreated = usageRow?.sites_created ?? 0;
+  const editsUsed = usageRow?.edits_used ?? 0;
+  const usage = {
+    sites: planLimits.sites === null ? 'Unlimited' : `${sitesCreated} / ${planLimits.sites}`,
+    edits: planLimits.edits === null ? 'Unlimited' : `${editsUsed} / ${planLimits.edits}`,
+    limit:
+      planLimits.sites === null
+        ? 'Unlimited'
+        : `${planLimits.sites} site${planLimits.sites === 1 ? '' : 's'} · ${planLimits.edits} edits`
+  };
 
   if (!isDashboardPage) {
     const isSignup = authMode === 'signup';
