@@ -74,24 +74,24 @@ export function LoveHeader({ currentQuestion, totalQuestions, isGlowing, isPulsi
   }, []);
 
   return (
-    <div className="fixed top-3 left-1/2 -translate-x-1/2 w-[94%] max-w-lg z-50 pointer-events-none font-sans">
-      {/* Floating glassmorphic container */}
+    <div className="relative w-full max-w-lg mx-auto pointer-events-none font-sans">
+      {/* Integrated glassmorphic strip — sits in normal page flow, not floating */}
       <motion.div
-        className="relative rounded-2xl p-[1px] overflow-hidden"
+        className="relative rounded-xl p-[1px] overflow-hidden"
         style={{
-          background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.1), rgba(255, 77, 109, 0.2), rgba(255, 133, 161, 0.1))',
+          background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.07), rgba(255, 77, 109, 0.12), rgba(255, 133, 161, 0.07))',
         }}
         animate={{
           boxShadow: isGlowing
-            ? '0 15px 35px rgba(255, 77, 109, 0.35), 0 0 25px rgba(255, 133, 161, 0.25)'
-            : '0 10px 30px rgba(0, 0, 0, 0.5)',
+            ? '0 6px 18px rgba(255, 77, 109, 0.22), 0 0 12px rgba(255, 133, 161, 0.16)'
+            : '0 3px 10px rgba(0, 0, 0, 0.28)',
         }}
         transition={{ duration: 0.4 }}
       >
         {/* Shimmer overlay moving slowly across the card */}
         <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent translate-x-[-100%] animate-[shimmer_6s_infinite_linear] pointer-events-none" />
 
-        <div className="relative backdrop-blur-2xl bg-white/5 rounded-2xl p-3.5 pointer-events-auto border border-white/5">
+        <div className="relative backdrop-blur-xl bg-white/[0.03] rounded-xl px-3.5 py-2 pointer-events-auto border border-white/5">
           {/* Header sparkles layer */}
           <AnimatePresence>
             {headerSparkles.map(s => (
@@ -134,40 +134,40 @@ export function LoveHeader({ currentQuestion, totalQuestions, isGlowing, isPulsi
             ))}
           </AnimatePresence>
 
-          {/* Text and stats matching Geometric Balance */}
-          <div className="flex justify-between items-end mb-2">
+          {/* Text and stats — compact, single-line footprint */}
+          <div className="flex justify-between items-center mb-1.5">
             <div>
-              <h1 className="text-[10px] uppercase tracking-[0.3em] font-outfit text-pink-300/80 mb-0.5 font-bold">
+              <h1 className="text-[8px] uppercase tracking-[0.26em] font-outfit text-pink-300/70 font-bold leading-none">
                 💖 Love Journey
               </h1>
-              <p className="text-sm font-medium text-white/90">
+              <p className="text-xs font-medium text-white/85 mt-0.5 leading-none">
                 Question <span className="font-semibold text-white">{String(currentQuestion).padStart(2, '0')}</span>{' '}
-                <span className="text-pink-300/50 italic text-xs">of {totalQuestions}</span>
+                <span className="text-pink-300/50 italic text-[10px]">of {totalQuestions}</span>
               </p>
             </div>
             <div className="text-right">
               <motion.span
-                className="text-xl font-light tracking-tighter text-white font-outfit"
+                className="text-sm font-light tracking-tighter text-white font-outfit"
                 animate={{ scale: isPulsing ? [1, 1.15, 1] : 1 }}
                 transition={{ duration: 0.5 }}
               >
                 {displayedPct}%
               </motion.span>
-              <span className="block text-[8px] uppercase tracking-widest text-pink-300/50 font-bold">
+              <span className="block text-[7px] uppercase tracking-widest text-pink-300/50 font-bold leading-none">
                 Completed
               </span>
             </div>
           </div>
 
-          {/* Progress bar container */}
-          <div className="w-full h-[6px] bg-black/40 rounded-full overflow-hidden border border-white/5 relative">
+          {/* Progress bar container — thinner, softer */}
+          <div className="w-full h-[3px] bg-black/40 rounded-full overflow-hidden border border-white/5 relative">
             <motion.div
               className="h-full rounded-full bg-gradient-to-r from-[#ff4d6d] via-[#ff85a1] to-[#ffb3c1]"
               initial={{ width: 0 }}
               animate={{
                 width: `${percentage}%`,
                 scaleY: isPulsing ? [1, 1.35, 1] : 1,
-                boxShadow: isGlowing ? '0 0 10px rgba(255, 77, 109, 0.8)' : '0 0 4px rgba(255, 77, 109, 0.3)',
+                boxShadow: isGlowing ? '0 0 6px rgba(255, 77, 109, 0.7)' : '0 0 2px rgba(255, 77, 109, 0.25)',
               }}
               transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
             />

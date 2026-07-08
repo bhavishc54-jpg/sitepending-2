@@ -965,7 +965,7 @@ export default function App() {
 
       <button
         type="button"
-        className="fixed left-4 top-28 sm:top-4 z-[60] flex h-10 w-10 flex-col items-center justify-center gap-[5px] rounded-full border border-white/15 bg-white/5 backdrop-blur-md opacity-80 hover:opacity-100 hover:-translate-y-0.5 focus-visible:outline focus-visible:outline-2 focus-visible:outline-pink-200 transition-all duration-300 ease-out cursor-pointer shadow-[0_4px_20px_rgba(0,0,0,0.3)]"
+        className="fixed left-4 top-4 z-[60] flex h-10 w-10 flex-col items-center justify-center gap-[5px] rounded-full border border-white/15 bg-white/5 backdrop-blur-md opacity-80 hover:opacity-100 hover:-translate-y-0.5 focus-visible:outline focus-visible:outline-2 focus-visible:outline-pink-200 transition-all duration-300 ease-out cursor-pointer shadow-[0_4px_20px_rgba(0,0,0,0.3)]"
         aria-label="Open account menu"
         aria-expanded={menuOpen}
         onClick={() => setMenuOpen(true)}
@@ -1082,14 +1082,13 @@ export default function App() {
         )}
       </AnimatePresence>
 
-      <LoveHeader
-        currentQuestion={progressStep}
-        totalQuestions={STEPS.length}
-        isGlowing={isPBarGlowing}
-        isPulsing={isPBarPulsing}
-      />
-
-      <main className="relative z-10 min-h-screen w-full max-w-xl mx-auto px-4 pt-36 pb-20 flex flex-col items-center justify-center gap-4">
+      <main className="relative z-10 min-h-screen w-full max-w-xl mx-auto px-4 pt-16 pb-20 flex flex-col items-center justify-center gap-4">
+        <LoveHeader
+          currentQuestion={progressStep}
+          totalQuestions={STEPS.length}
+          isGlowing={isPBarGlowing}
+          isPulsing={isPBarPulsing}
+        />
         {profile && (
           <span className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 backdrop-blur-md px-4 py-1.5 text-xs font-outfit font-semibold tracking-wide text-pink-100 shadow-[0_4px_16px_rgba(0,0,0,0.3)]">
             Your Plan: {getPlanLabel(profile)}
