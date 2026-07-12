@@ -342,6 +342,69 @@ async function completeSite(accessToken: string, siteId: string): Promise<Comple
   return response.json();
 }
 
+interface SiteRow {
+  id: string;
+  title: string | null;
+  answers: Record<string, string>;
+  status: 'draft' | 'completed' | 'published';
+  created_at: string;
+  completed_at: string | null;
+  published_at: string | null;
+}
+
+// Reads only the logged-in user's own saved Love Journeys. This is
+// read-only (no INSERT/UPDATE from the frontend) and relies on the
+// public.sites RLS policy (auth.uid() = user_id) from Phase 4A as the real
+// authority — the user_id filter here is just the same defense-in-depth
+// pattern already used by fetchProfile/fetchUsage.
+async function fetchSites(userId: string, accessToken: string): Promise<SiteRow[]> {
+  const response = await fetch(
+    `${SUPABASE_URL}/rest/v1/sites?user_id=eq.${userId}&select=id,title,answers,status,created_at,completed_at,published_at&order=created_at.desc`,
+    {
+      headers: {
+        apikey: SUPABASE_PUBLISHABLE_KEY,
+        Authorization: `Bearer ${accessToken}`
+      }
+    }
+  );
+
+  if (!response.ok) {
+    throw new Error(`Could not load sites (status ${response.status})`);
+  }
+
+  const rows = await response.json().catch(() => []);
+  return Array.isArray(rows) ? rows : [];
+}
+
+function formatSavedDate(iso: string | null): string {
+  if (!iso) return '';
+  try {
+    return new Date(iso).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' });
+  } catch {
+    return '';
+  }
+}
+
+function getSiteStatusLabel(status: string): string {
+  if (status === 'published') return 'Published';
+  if (status === 'completed') return 'Completed';
+  return 'Draft';
+}
+
+function getSiteStatusBadgeClass(status: string): string {
+  if (status === 'published') return 'border-emerald-300/40 bg-emerald-400/10 text-emerald-200';
+  if (status === 'completed') return 'border-pink-300/40 bg-pink-400/10 text-pink-100';
+  return 'border-white/20 bg-white/5 text-pink-100/70';
+}
+
+// Friendlier labels than raw answer keys for the read-only detail view.
+const ANSWER_LABELS: Record<string, string> = {
+  ready: 'Ready to begin',
+  feeling: 'A feeling shared',
+  promise: 'A promise made',
+  letter: 'Final letter'
+};
+
 export default function App() {
   const savedState = useMemo<Record<string, any>>(() => {
     if (typeof window === 'undefined') return {};
@@ -392,6 +455,10 @@ export default function App() {
   const [resetPassword, setResetPassword] = useState('');
   const [profile, setProfile] = useState<ProfileRow | null>(null);
   const [usageRow, setUsageRow] = useState<UsageRow | null>(null);
+  const [sites, setSites] = useState<SiteRow[] | null>(null);
+  const [sitesLoading, setSitesLoading] = useState(false);
+  const [sitesError, setSitesError] = useState(false);
+  const [viewingSite, setViewingSite] = useState<SiteRow | null>(null);
   const [resetAccessToken, setResetAccessToken] = useState('');
   const [menuOpen, setMenuOpen] = useState(false);
   const [clockLabel, setClockLabel] = useState('');
@@ -409,6 +476,27 @@ export default function App() {
     }
   }, []);
 
+  // Loads only the current user's own saved Love Journeys for the "My Love
+  // Pages" section. Defined before the effect below so it can be called
+  // from there, and reused later (after a successful completion) to
+  // refresh the list without a full page reload.
+  const loadSites = async (session?: { accessToken: string; userId: string } | null) => {
+    const activeSession = session ?? readAuthSession();
+    if (!activeSession) return;
+
+    setSitesLoading(true);
+    setSitesError(false);
+    try {
+      const rows = await fetchSites(activeSession.userId, activeSession.accessToken);
+      setSites(rows);
+    } catch (error) {
+      console.error('[Sites] Could not load saved Love Pages.', error);
+      setSitesError(true);
+    } finally {
+      setSitesLoading(false);
+    }
+  };
+
   useEffect(() => {
     if (!isDashboardPage) return;
 
@@ -422,6 +510,7 @@ export default function App() {
       }
       setUsageRow(row);
     });
+    loadSites(session);
   }, [isDashboardPage]);
 
   useEffect(() => {
@@ -717,6 +806,10 @@ export default function App() {
 
       setIsComplete(true);
       setSubmitStatus('idle');
+
+      // The freshly completed site should show up in "My Love Pages"
+      // immediately, without needing a full page reload.
+      loadSites(session);
     } catch (error) {
       console.error('[Form] Could not submit romantic answers.', error);
       setSubmitStatus('error');
@@ -922,6 +1015,38 @@ export default function App() {
       planLimits.sites === null
         ? 'Unlimited'
         : `${planLimits.sites} site${planLimits.sites === 1 ? '' : 's'} · ${planLimits.edits} edits`
+  };
+
+  // Starts a brand-new Love Journey, but only after checking the same real
+  // usage numbers shown in the drawer. This is a UI-level courtesy check
+  // only — create_draft_site() remains the actual secure authority at
+  // final submission, since usageRow here could theoretically be stale.
+  const startNewJourney = () => {
+    if (planLimits.sites !== null && sitesCreated >= planLimits.sites) {
+      setLimitBlocked(true);
+      return;
+    }
+
+    setLimitBlocked(false);
+    setSubmitStatus('idle');
+    setStepIndex(0);
+    setAnswers({});
+    setButtonClicks({});
+    setButtonOffset({ x: 0, y: 0 });
+    setNoOffset({ x: 0, y: 0 });
+    setIsComplete(false);
+    setSiteId(null);
+    setFormspreeSent(false);
+
+    const session = readAuthSession();
+    saveJourneyState({
+      stepIndex: 0,
+      answers: {},
+      isComplete: false,
+      siteId: null,
+      userId: session?.userId ?? null,
+      formspreeSent: false
+    });
   };
 
   if (!isDashboardPage) {
@@ -1511,7 +1636,138 @@ export default function App() {
             </motion.section>
           )}
         </AnimatePresence>
+
+        <section className="w-full rounded-[28px] bg-white/5 backdrop-blur-xl border border-white/10 p-6 sm:p-8 shadow-[0_15px_45px_rgba(0,0,0,0.5)] relative overflow-hidden">
+          <div className="relative flex items-center justify-between gap-4 mb-5 flex-wrap">
+            <p className="font-outfit uppercase tracking-[0.28em] text-[10px] text-pink-300/65 font-bold">
+              My Love Pages
+            </p>
+            <button
+              type="button"
+              onClick={startNewJourney}
+              className="rounded-full border border-pink-300/40 bg-white/5 px-5 py-2 text-xs font-outfit font-bold uppercase tracking-[0.16em] text-pink-100 hover:bg-pink-300/15 focus-visible:outline focus-visible:outline-2 focus-visible:outline-pink-200 transition-colors duration-300 ease-out cursor-pointer"
+            >
+              + Create New Love Journey
+            </button>
+          </div>
+
+          {sitesLoading && !sites ? (
+            <p className="relative text-sm text-pink-100/70">Loading your saved pages…</p>
+          ) : sitesError ? (
+            <div className="relative">
+              <p className="mb-3 text-sm text-rose-200">
+                I could not load your saved pages right now.
+              </p>
+              <button
+                type="button"
+                onClick={() => loadSites()}
+                className="rounded-full border border-white/20 bg-white/5 px-5 py-2 text-xs font-outfit font-bold uppercase tracking-[0.16em] text-pink-100 hover:bg-white/10 transition-colors duration-300 ease-out cursor-pointer"
+              >
+                Try again
+              </button>
+            </div>
+          ) : sites && sites.length === 0 ? (
+            <p className="relative text-sm text-pink-100/60">
+              No love pages yet — finish your Love Journey above to save one here.
+            </p>
+          ) : sites ? (
+            <div className="relative grid gap-3">
+              {sites.map(site => (
+                <div
+                  key={site.id}
+                  className="flex items-center justify-between gap-3 rounded-2xl border border-white/10 bg-white/5 p-4"
+                >
+                  <div className="min-w-0">
+                    <p className="truncate text-sm font-semibold text-[#fff0f3]">
+                      {site.title || 'Untitled Love Page'}
+                    </p>
+                    <p className="mt-1 flex flex-wrap items-center gap-2 text-xs text-pink-200/60">
+                      <span
+                        className={`rounded-full border px-2.5 py-0.5 text-[10px] font-outfit font-bold uppercase tracking-wide ${getSiteStatusBadgeClass(site.status)}`}
+                      >
+                        {getSiteStatusLabel(site.status)}
+                      </span>
+                      <span>Created {formatSavedDate(site.created_at)}</span>
+                      {site.completed_at && <span>· Completed {formatSavedDate(site.completed_at)}</span>}
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setViewingSite(site)}
+                    className="shrink-0 rounded-full border border-white/20 bg-white/5 px-4 py-2 text-xs font-outfit font-bold uppercase tracking-[0.14em] text-pink-100 hover:bg-white/10 transition-colors duration-300 ease-out cursor-pointer"
+                  >
+                    View
+                  </button>
+                </div>
+              ))}
+            </div>
+          ) : null}
+        </section>
       </main>
+
+      <AnimatePresence>
+        {viewingSite && (
+          <>
+            <motion.div
+              key="site-detail-backdrop"
+              className="fixed inset-0 z-[70] bg-black/55 backdrop-blur-sm"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.3 }}
+              onClick={() => setViewingSite(null)}
+            />
+            <motion.div
+              key="site-detail"
+              className="fixed inset-0 z-[80] flex items-center justify-center p-4"
+              initial={{ opacity: 0, scale: 0.96 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.96 }}
+              transition={{ duration: 0.3, ease: 'easeOut' }}
+            >
+              <div
+                role="dialog"
+                aria-label="Saved Love Page detail"
+                className="w-full max-w-md rounded-[28px] border border-white/10 bg-gradient-to-b from-[#2c0b17] to-[#1a050d] p-7 sm:p-8 shadow-[0_15px_45px_rgba(0,0,0,0.6)] relative max-h-[85vh] overflow-y-auto"
+              >
+                <button
+                  type="button"
+                  onClick={() => setViewingSite(null)}
+                  aria-label="Close"
+                  className="absolute top-6 right-6 flex h-8 w-8 items-center justify-center rounded-full border border-white/15 bg-white/5 text-sm text-pink-100 hover:bg-white/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-pink-200 transition-colors duration-300 ease-out cursor-pointer"
+                >
+                  ✕
+                </button>
+
+                <span
+                  className={`inline-block rounded-full border px-3 py-1 text-[10px] font-outfit font-bold uppercase tracking-wide mb-4 ${getSiteStatusBadgeClass(viewingSite.status)}`}
+                >
+                  {getSiteStatusLabel(viewingSite.status)}
+                </span>
+
+                <h2 className="font-display font-light italic text-2xl leading-tight tracking-tight mb-2 pr-10">
+                  {viewingSite.title || 'Untitled Love Page'}
+                </h2>
+                <p className="mb-6 text-xs text-pink-200/60">
+                  Created {formatSavedDate(viewingSite.created_at)}
+                  {viewingSite.completed_at && ` · Completed ${formatSavedDate(viewingSite.completed_at)}`}
+                </p>
+
+                <div className="grid gap-5">
+                  {Object.entries(viewingSite.answers || {}).map(([key, value]) => (
+                    <div key={key}>
+                      <p className="mb-1 text-[10px] uppercase tracking-widest text-pink-300/50 font-bold">
+                        {ANSWER_LABELS[key] || key}
+                      </p>
+                      <p className="text-sm text-pink-100/90 whitespace-pre-wrap">{value || '—'}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
 
       <footer className="relative z-10 w-full text-center text-[10px] text-pink-300/30 font-sans pb-6 select-none pointer-events-none uppercase tracking-widest font-bold">
         Copyright © 2026 Bhavish. All Rights Reserved.
