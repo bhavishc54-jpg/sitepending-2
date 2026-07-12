@@ -415,6 +415,37 @@ async function updateLoveSite(
   return response.json();
 }
 
+interface PublishSiteResult {
+  success: boolean;
+  reason?: string;
+  site_id?: string;
+  status?: string;
+  published_at?: string | null;
+}
+
+// Calls the secure publish_love_site RPC as the logged-in user (their own
+// access token — never the service_role key). Marks the caller's own
+// completed site as published; the database side is idempotent. Must only
+// be called when the user explicitly clicks Publish — never while
+// viewing, editing, typing, or during the create/complete submission flow.
+async function publishSite(accessToken: string, siteId: string): Promise<PublishSiteResult> {
+  const response = await fetch(`${SUPABASE_URL}/rest/v1/rpc/publish_love_site`, {
+    method: 'POST',
+    headers: {
+      apikey: SUPABASE_PUBLISHABLE_KEY,
+      Authorization: `Bearer ${accessToken}`,
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({ p_site_id: siteId })
+  });
+
+  if (!response.ok) {
+    throw new Error(`publish_love_site returned ${response.status}`);
+  }
+
+  return response.json();
+}
+
 function formatSavedDate(iso: string | null): string {
   if (!iso) return '';
   try {
@@ -507,12 +538,16 @@ export default function App() {
   const [editLimitReached, setEditLimitReached] = useState(false);
   const [editSuccessNotice, setEditSuccessNotice] = useState('');
   const [editInfoNotice, setEditInfoNotice] = useState('');
+  const [publishingSiteId, setPublishingSiteId] = useState<string | null>(null);
+  const [publishError, setPublishError] = useState('');
+  const [publishSuccessNotice, setPublishSuccessNotice] = useState('');
   const [resetAccessToken, setResetAccessToken] = useState('');
   const [menuOpen, setMenuOpen] = useState(false);
   const [clockLabel, setClockLabel] = useState('');
   const audioRef = useRef<HTMLAudioElement>(null);
   const isSubmittingRef = useRef(false);
   const isSavingEditRef = useRef(false);
+  const isPublishingRef = useRef(false);
   const typing = useRomanticTyping<HTMLTextAreaElement>();
 
   useEffect(() => {
@@ -664,6 +699,69 @@ export default function App() {
     } finally {
       setEditSaving(false);
       isSavingEditRef.current = false;
+    }
+  };
+
+  const publishSavedSite = async (site: SiteRow) => {
+    // Only completed sites can ever reach this — the button itself is only
+    // rendered for status === 'completed', and the RPC re-checks this
+    // authoritatively regardless.
+    if (isPublishingRef.current || site.status !== 'completed') return;
+
+    const confirmed = window.confirm(
+      'Publish this Love Page? This marks it as published — you can always come back here first.'
+    );
+    if (!confirmed) return;
+
+    isPublishingRef.current = true;
+    setPublishingSiteId(site.id);
+    setPublishError('');
+    setPublishSuccessNotice('');
+
+    try {
+      const session = readAuthSession();
+      if (!session) {
+        setPublishError('Please sign in again to publish this page.');
+        return;
+      }
+
+      let result: PublishSiteResult;
+      try {
+        result = await publishSite(session.accessToken, site.id);
+      } catch (error) {
+        console.error('[Site] Could not reach publish_love_site.', error);
+        setPublishError('I could not publish this page right now. Please try again.');
+        return;
+      }
+
+      if (!result.success) {
+        if (result.reason === 'site_not_completed') {
+          setPublishError('Complete this Love Page before publishing.');
+        } else if (result.reason === 'site_not_found') {
+          setPublishError('This page could not be found for your account.');
+        } else {
+          setPublishError('That didn’t go through. Please try again in a moment.');
+        }
+        return;
+      }
+
+      // Success — the site is confirmed published in Supabase. No usage
+      // change: sites_created/edits_used are never touched by publishing.
+      setPublishSuccessNotice('Your Love Page is published.');
+      window.setTimeout(() => setPublishSuccessNotice(''), 4000);
+
+      // If the same site is currently open in the read-only View modal,
+      // refresh that snapshot too so reopening it doesn't show stale data.
+      setViewingSite(prev =>
+        prev && prev.id === site.id
+          ? { ...prev, status: 'published', published_at: result.published_at ?? prev.published_at }
+          : prev
+      );
+
+      loadSites(session);
+    } finally {
+      setPublishingSiteId(null);
+      isPublishingRef.current = false;
     }
   };
 
@@ -1862,6 +1960,26 @@ export default function App() {
             </p>
           )}
 
+          {publishSuccessNotice && (
+            <p
+              className="relative mb-4 rounded-2xl border border-emerald-300/30 bg-emerald-400/10 px-4 py-3 text-xs text-emerald-100"
+              role="status"
+              aria-live="polite"
+            >
+              {publishSuccessNotice}
+            </p>
+          )}
+
+          {publishError && (
+            <p
+              className="relative mb-4 rounded-2xl border border-rose-300/25 bg-rose-500/10 px-4 py-3 text-xs text-rose-200"
+              role="status"
+              aria-live="polite"
+            >
+              {publishError}
+            </p>
+          )}
+
           {sitesLoading && !sites ? (
             <p className="relative text-sm text-pink-100/70">Loading your saved pages…</p>
           ) : sitesError ? (
@@ -1902,7 +2020,7 @@ export default function App() {
                       {site.completed_at && <span>· Completed {formatSavedDate(site.completed_at)}</span>}
                     </p>
                   </div>
-                  <div className="flex shrink-0 gap-2">
+                  <div className="flex shrink-0 flex-wrap justify-end gap-2">
                     {site.status !== 'published' && (
                       <button
                         type="button"
@@ -1910,6 +2028,16 @@ export default function App() {
                         className="rounded-full border border-white/20 bg-white/5 px-4 py-2 text-xs font-outfit font-bold uppercase tracking-[0.14em] text-pink-100 hover:bg-white/10 transition-colors duration-300 ease-out cursor-pointer"
                       >
                         Edit
+                      </button>
+                    )}
+                    {site.status === 'completed' && (
+                      <button
+                        type="button"
+                        onClick={() => publishSavedSite(site)}
+                        disabled={publishingSiteId === site.id}
+                        className="rounded-full border border-emerald-300/40 bg-emerald-400/10 px-4 py-2 text-xs font-outfit font-bold uppercase tracking-[0.14em] text-emerald-200 hover:bg-emerald-400/20 transition-colors duration-300 ease-out cursor-pointer disabled:opacity-45 disabled:cursor-not-allowed"
+                      >
+                        {publishingSiteId === site.id ? 'Publishing…' : 'Publish'}
                       </button>
                     )}
                     <button
