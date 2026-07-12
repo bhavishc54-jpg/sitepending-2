@@ -81,6 +81,27 @@ function safeReadState(): Record<string, any> {
   }
 }
 
+interface LoveJourneyState {
+  stepIndex: number;
+  answers: Record<string, string>;
+  isComplete: boolean;
+  siteId: string | null;
+  userId: string | null;
+}
+
+// Writes the Love Journey progress straight to localStorage, synchronously,
+// independent of React's render/effect cycle. Used right after a successful
+// create_draft_site call so a refresh or browser close in the moment between
+// "Supabase created the site" and "Formspree was notified" can never lose
+// the new site_id and cause a second site to be created on retry.
+function saveJourneyState(state: LoveJourneyState) {
+  try {
+    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+  } catch {
+    // The website should keep working even when localStorage is blocked.
+  }
+}
+
 function randomOffset(range = 54) {
   const x = Math.round(Math.random() * range * 2 - range);
   const y = Math.round(Math.random() * range * 2 - range);
@@ -142,6 +163,18 @@ function saveAuthSession(session: unknown) {
     window.localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(session));
   } catch {
     // Login still succeeds even if browser storage is unavailable.
+  }
+}
+
+function readAuthSession(): { accessToken: string; userId: string } | null {
+  try {
+    const raw = window.localStorage.getItem(AUTH_STORAGE_KEY);
+    const session = raw ? JSON.parse(raw) : null;
+    const accessToken = session?.access_token;
+    const userId = session?.user?.id;
+    return accessToken && userId ? { accessToken, userId } : null;
+  } catch {
+    return null;
   }
 }
 
@@ -237,10 +270,53 @@ async function fetchUsage(userId: string, accessToken: string): Promise<UsageRow
   return Array.isArray(rows) && rows.length > 0 ? rows[0] : null;
 }
 
+interface CreateDraftSiteResult {
+  allowed: boolean;
+  reason?: string;
+  site_id?: string;
+  plan?: string;
+  sites_created?: number;
+  sites_limit?: number | null;
+}
+
+// Calls the secure create_draft_site RPC as the logged-in user (their own
+// access token — never the service_role key). The database itself decides
+// whether the user is under their plan's site limit and, only if so,
+// creates the public.sites row and increments user_usage.sites_created in
+// one atomic step. This must only be called once, at final submission.
+async function createDraftSite(
+  accessToken: string,
+  title: string,
+  answers: Record<string, string>
+): Promise<CreateDraftSiteResult> {
+  const response = await fetch(`${SUPABASE_URL}/rest/v1/rpc/create_draft_site`, {
+    method: 'POST',
+    headers: {
+      apikey: SUPABASE_PUBLISHABLE_KEY,
+      Authorization: `Bearer ${accessToken}`,
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({ p_title: title, p_answers: answers })
+  });
+
+  if (!response.ok) {
+    throw new Error(`create_draft_site returned ${response.status}`);
+  }
+
+  return response.json();
+}
+
 export default function App() {
   const savedState = useMemo<Record<string, any>>(() => {
     if (typeof window === 'undefined') return {};
-    return safeReadState();
+    const raw = safeReadState();
+    const currentUserId = readAuthSession()?.userId ?? null;
+    // Only reuse a saved Love Journey (including its siteId) when it was
+    // saved by the account that is currently logged in. Anything saved
+    // without a matching userId — a different account, or no account at
+    // all — is ignored so one account can never see or reuse another
+    // account's browser-local progress or site id.
+    return raw.userId && currentUserId && raw.userId === currentUserId ? raw : {};
   }, []);
   const isDashboardPage = useMemo(() => {
     if (typeof window === 'undefined') return false;
@@ -257,6 +333,8 @@ export default function App() {
   const [musicError, setMusicError] = useState('');
   const [submitStatus, setSubmitStatus] = useState<'idle' | 'sending' | 'error'>('idle');
   const [isComplete, setIsComplete] = useState(() => Boolean(savedState.isComplete));
+  const [siteId, setSiteId] = useState<string | null>(() => savedState.siteId || null);
+  const [limitBlocked, setLimitBlocked] = useState(false);
   const [isPBarGlowing, setIsPBarGlowing] = useState(false);
   const [isPBarPulsing, setIsPBarPulsing] = useState(false);
   const [petals, setPetals] = useState<{ id: number; left: number; delay: number; duration: number; size: number }[]>([]);
@@ -281,6 +359,7 @@ export default function App() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [clockLabel, setClockLabel] = useState('');
   const audioRef = useRef<HTMLAudioElement>(null);
+  const isSubmittingRef = useRef(false);
   const typing = useRomanticTyping<HTMLTextAreaElement>();
 
   useEffect(() => {
@@ -296,24 +375,16 @@ export default function App() {
   useEffect(() => {
     if (!isDashboardPage) return;
 
-    try {
-      const raw = window.localStorage.getItem(AUTH_STORAGE_KEY);
-      const session = raw ? JSON.parse(raw) : null;
-      const accessToken = session?.access_token;
-      const userId = session?.user?.id;
+    const session = readAuthSession();
+    if (!session) return;
 
-      if (accessToken && userId) {
-        fetchProfile(userId, accessToken).then(setProfile);
-        fetchUsage(userId, accessToken).then(row => {
-          if (!row) {
-            console.warn('[Usage] No user_usage row found for this user; showing 0 values.');
-          }
-          setUsageRow(row);
-        });
+    fetchProfile(session.userId, session.accessToken).then(setProfile);
+    fetchUsage(session.userId, session.accessToken).then(row => {
+      if (!row) {
+        console.warn('[Usage] No user_usage row found for this user; showing 0 values.');
       }
-    } catch {
-      // The plan label just won't show if this fails; the dashboard itself is unaffected.
-    }
+      setUsageRow(row);
+    });
   }, [isDashboardPage]);
 
   useEffect(() => {
@@ -362,19 +433,14 @@ export default function App() {
   }, []);
 
   useEffect(() => {
-    try {
-      window.localStorage.setItem(
-        STORAGE_KEY,
-        JSON.stringify({
-          stepIndex,
-          answers,
-          isComplete
-        })
-      );
-    } catch {
-      // The website should keep working even when localStorage is blocked.
-    }
-  }, [stepIndex, answers, isComplete]);
+    saveJourneyState({
+      stepIndex,
+      answers,
+      isComplete,
+      siteId,
+      userId: readAuthSession()?.userId ?? null
+    });
+  }, [stepIndex, answers, isComplete, siteId]);
 
   useEffect(() => {
     const audio = audioRef.current;
@@ -448,17 +514,92 @@ export default function App() {
   };
 
   const submitAnswers = async () => {
+    // Synchronous guard against double-clicks/duplicate calls: React state
+    // updates below are batched/async, so two click events fired in the
+    // same tick could otherwise both slip past a state-based check. A ref
+    // updates immediately, so the second call sees isSubmittingRef.current
+    // already true and bails out before doing anything.
+    if (isSubmittingRef.current) return;
+    isSubmittingRef.current = true;
     setSubmitStatus('sending');
 
-    const payload = {
-      _subject: 'Someone completed your love website',
-      ready: 'yes',
-      feeling: answers.feeling || '',
-      promise: 'yes',
-      finalMessage: answers.letter || ''
-    };
-
     try {
+      // A site was already created in an earlier attempt (e.g. Supabase
+      // succeeded but Formspree failed, and the user hit submit again, or
+      // the page was refreshed). Skip create_draft_site entirely — it must
+      // only ever run once per completed Love Journey — and just retry the
+      // email notification below.
+      let currentSiteId = siteId;
+
+      if (!currentSiteId) {
+        const session = readAuthSession();
+        if (!session) {
+          console.error('[Site] No active session; cannot save this Love Journey.');
+          setSubmitStatus('error');
+          return;
+        }
+
+        const loveJourneyAnswers = {
+          ready: 'yes',
+          feeling: answers.feeling || '',
+          promise: 'yes',
+          letter: answers.letter || ''
+        };
+        const title = `My Love Page — ${new Date().toLocaleDateString()}`;
+
+        let rpcResult: CreateDraftSiteResult;
+        try {
+          rpcResult = await createDraftSite(session.accessToken, title, loveJourneyAnswers);
+        } catch (error) {
+          console.error('[Site] Could not reach create_draft_site.', error);
+          setSubmitStatus('error');
+          return;
+        }
+
+        if (!rpcResult.allowed) {
+          if (rpcResult.reason === 'site_limit_reached') {
+            setLimitBlocked(true);
+            setSubmitStatus('idle');
+          } else {
+            console.error('[Site] create_draft_site denied the request.', rpcResult);
+            setSubmitStatus('error');
+          }
+          return;
+        }
+
+        currentSiteId = rpcResult.site_id ?? null;
+        setSiteId(currentSiteId);
+
+        // Persist the new site id to localStorage right now, synchronously
+        // — not just via setSiteId (async/batched) and not just via the
+        // useEffect above (fires after React re-renders). If the browser is
+        // refreshed or closed in the moment right after Supabase creates
+        // the site but before the Formspree call below finishes, this
+        // write guarantees the site id survives, so a retry reuses it
+        // instead of calling create_draft_site a second time.
+        saveJourneyState({
+          stepIndex,
+          answers,
+          isComplete: false,
+          siteId: currentSiteId,
+          userId: session.userId
+        });
+
+        // Real usage just changed in the database — reflect it in the
+        // drawer instead of guessing/incrementing a local number.
+        fetchUsage(session.userId, session.accessToken).then(setUsageRow);
+      }
+
+      // The site is confirmed saved in Supabase (just now, or in an earlier
+      // attempt) — only now is it safe to send the email notification.
+      const payload = {
+        _subject: 'Someone completed your love website',
+        ready: 'yes',
+        feeling: answers.feeling || '',
+        promise: 'yes',
+        finalMessage: answers.letter || ''
+      };
+
       const res = await fetch(FORM_ENDPOINT, {
         method: 'POST',
         headers: {
@@ -474,6 +615,8 @@ export default function App() {
     } catch (error) {
       console.error('[Form] Could not submit romantic answers.', error);
       setSubmitStatus('error');
+    } finally {
+      isSubmittingRef.current = false;
     }
   };
 
@@ -1095,7 +1238,51 @@ export default function App() {
           </span>
         )}
         <AnimatePresence mode="wait">
-          {!isComplete ? (
+          {limitBlocked ? (
+            <motion.section
+              key="upgrade-limit"
+              className="w-full rounded-[28px] bg-white/5 backdrop-blur-xl border border-white/10 p-8 sm:p-10 shadow-[0_15px_45px_rgba(0,0,0,0.5)] text-center relative overflow-hidden"
+              initial={{ opacity: 0, y: 18, scale: 0.98 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: -18, scale: 0.98 }}
+              transition={{ duration: 0.45, ease: 'easeOut' }}
+            >
+              <div className="absolute inset-0 pointer-events-none bg-[radial-gradient(circle_at_20%_0%,rgba(255,133,161,0.16),transparent_28%),radial-gradient(circle_at_80%_100%,rgba(255,214,231,0.08),transparent_30%)]" />
+
+              <div className="relative">
+                <p className="font-outfit uppercase tracking-[0.32em] text-[10px] text-pink-300/65 font-bold mb-5">
+                  Plan Limit Reached
+                </p>
+
+                <h1 className="font-display font-light italic text-3xl sm:text-4xl leading-tight tracking-tight mb-5">
+                  You&apos;ve reached your {getPlanLabel(profile)} limit
+                </h1>
+
+                <p className="text-sm sm:text-base leading-relaxed text-pink-100/82 max-w-md mx-auto mb-8">
+                  Upgrade to continue creating more love pages.
+                </p>
+
+                <div className="grid gap-3 max-w-xs mx-auto">
+                  {accessTier === 'free' && (
+                    <button
+                      type="button"
+                      disabled
+                      className="w-full rounded-full border border-white/20 bg-white/5 px-8 py-3 text-xs font-outfit font-bold uppercase tracking-[0.18em] text-pink-100/70 cursor-not-allowed"
+                    >
+                      Upgrade to Basic · Coming soon
+                    </button>
+                  )}
+                  <button
+                    type="button"
+                    disabled
+                    className="w-full rounded-full bg-white/90 px-8 py-3 text-xs font-outfit font-bold uppercase tracking-[0.18em] text-[#1a050d] opacity-60 cursor-not-allowed"
+                  >
+                    Upgrade to Premium · Coming soon
+                  </button>
+                </div>
+              </div>
+            </motion.section>
+          ) : !isComplete ? (
             <motion.section
               key={currentStep.id}
               className="w-full rounded-[28px] bg-white/5 backdrop-blur-xl border border-white/10 p-8 sm:p-10 shadow-[0_15px_45px_rgba(0,0,0,0.5)] text-center relative overflow-hidden"
