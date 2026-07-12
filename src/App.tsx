@@ -376,6 +376,45 @@ async function fetchSites(userId: string, accessToken: string): Promise<SiteRow[
   return Array.isArray(rows) ? rows : [];
 }
 
+interface UpdateLoveSiteResult {
+  allowed: boolean;
+  reason?: string;
+  site_id?: string;
+  status?: string;
+  plan?: string;
+  edits_used?: number;
+  edits_limit?: number | null;
+}
+
+// Calls the secure update_love_site RPC as the logged-in user (their own
+// access token — never the service_role key). Edits the caller's own site
+// and increments user_usage.edits_used in the same atomic step, only if
+// they are under their plan's edit limit. Must only be called when the
+// user explicitly clicks Save Changes in the edit modal — never on open,
+// never while typing, never while viewing.
+async function updateLoveSite(
+  accessToken: string,
+  siteId: string,
+  title: string,
+  answers: Record<string, string>
+): Promise<UpdateLoveSiteResult> {
+  const response = await fetch(`${SUPABASE_URL}/rest/v1/rpc/update_love_site`, {
+    method: 'POST',
+    headers: {
+      apikey: SUPABASE_PUBLISHABLE_KEY,
+      Authorization: `Bearer ${accessToken}`,
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({ p_site_id: siteId, p_title: title, p_answers: answers })
+  });
+
+  if (!response.ok) {
+    throw new Error(`update_love_site returned ${response.status}`);
+  }
+
+  return response.json();
+}
+
 function formatSavedDate(iso: string | null): string {
   if (!iso) return '';
   try {
@@ -459,11 +498,21 @@ export default function App() {
   const [sitesLoading, setSitesLoading] = useState(false);
   const [sitesError, setSitesError] = useState(false);
   const [viewingSite, setViewingSite] = useState<SiteRow | null>(null);
+  const [editingSite, setEditingSite] = useState<SiteRow | null>(null);
+  const [editTitle, setEditTitle] = useState('');
+  const [editFeeling, setEditFeeling] = useState('');
+  const [editLetter, setEditLetter] = useState('');
+  const [editSaving, setEditSaving] = useState(false);
+  const [editError, setEditError] = useState('');
+  const [editLimitReached, setEditLimitReached] = useState(false);
+  const [editSuccessNotice, setEditSuccessNotice] = useState('');
+  const [editInfoNotice, setEditInfoNotice] = useState('');
   const [resetAccessToken, setResetAccessToken] = useState('');
   const [menuOpen, setMenuOpen] = useState(false);
   const [clockLabel, setClockLabel] = useState('');
   const audioRef = useRef<HTMLAudioElement>(null);
   const isSubmittingRef = useRef(false);
+  const isSavingEditRef = useRef(false);
   const typing = useRomanticTyping<HTMLTextAreaElement>();
 
   useEffect(() => {
@@ -494,6 +543,127 @@ export default function App() {
       setSitesError(true);
     } finally {
       setSitesLoading(false);
+    }
+  };
+
+  // Opens the edit modal pre-filled from the site's already-fetched data —
+  // no RPC call here, just populating local form state.
+  const openEditSite = (site: SiteRow) => {
+    if (site.status === 'published') return;
+    setEditingSite(site);
+    setEditTitle(site.title || '');
+    setEditFeeling(site.answers?.feeling || '');
+    setEditLetter(site.answers?.letter || '');
+    setEditError('');
+    setEditLimitReached(false);
+    setEditInfoNotice('');
+  };
+
+  // Closing (Cancel or the ✕ button) never calls the RPC either — it just
+  // discards the local form state.
+  const closeEditSite = () => {
+    if (editSaving) return;
+    setEditingSite(null);
+    setEditError('');
+    setEditLimitReached(false);
+  };
+
+  const saveEditedSite = async () => {
+    // Same synchronous-ref-guard pattern as the main submit flow: state
+    // updates are batched/async, so a ref is what actually stops a second
+    // click fired in the same tick from sending a second RPC call.
+    if (isSavingEditRef.current || !editingSite) return;
+
+    // No-op guard: update_love_site increments edits_used on every allowed
+    // call, so if nothing the user can actually change (title, feeling,
+    // letter) is different from what the modal was opened with, skip the
+    // RPC entirely rather than spend an edit for a save that changes
+    // nothing. Compared against the exact values openEditSite pre-filled
+    // the form with, not a re-fetch, since editingSite is that same
+    // untouched snapshot for as long as the modal has been open.
+    const originalTitle = editingSite.title || '';
+    const originalFeeling = editingSite.answers?.feeling || '';
+    const originalLetter = editingSite.answers?.letter || '';
+    const hasChanges =
+      editTitle !== originalTitle || editFeeling !== originalFeeling || editLetter !== originalLetter;
+
+    if (!hasChanges) {
+      setEditingSite(null);
+      setEditError('');
+      setEditLimitReached(false);
+      setEditInfoNotice('No changes to save.');
+      window.setTimeout(() => setEditInfoNotice(''), 4000);
+      return;
+    }
+
+    isSavingEditRef.current = true;
+    setEditSaving(true);
+    setEditError('');
+    setEditLimitReached(false);
+    setEditInfoNotice('');
+
+    try {
+      const session = readAuthSession();
+      if (!session) {
+        setEditError('Please sign in again to save changes.');
+        return;
+      }
+
+      // Start from the site's full existing answers object (preserving any
+      // extra keys it may already contain) and only ever change feeling
+      // and letter here. ready/promise are kept if already present, and
+      // only default to 'yes' when genuinely missing.
+      const existingAnswers = editingSite.answers || {};
+      const updatedAnswers = {
+        ...existingAnswers,
+        ready: existingAnswers.ready || 'yes',
+        promise: existingAnswers.promise || 'yes',
+        feeling: editFeeling,
+        letter: editLetter
+      };
+
+      let result: UpdateLoveSiteResult;
+      try {
+        result = await updateLoveSite(session.accessToken, editingSite.id, editTitle, updatedAnswers);
+      } catch (error) {
+        console.error('[Site] Could not reach update_love_site.', error);
+        setEditError('I could not save your changes right now. Please try again.');
+        return;
+      }
+
+      if (!result.allowed) {
+        if (result.reason === 'edit_limit_reached') {
+          setEditLimitReached(true);
+          setEditError(`You've reached your ${getPlanLabel(profile)} edit limit. Upgrade to keep making changes to your love pages.`);
+        } else if (result.reason === 'site_locked') {
+          setEditError('Published pages cannot be edited yet.');
+        } else if (result.reason === 'site_not_found') {
+          setEditError('This page could not be found for your account.');
+        } else if (result.reason === 'invalid_answers') {
+          setEditError('Saved answers format is invalid.');
+        } else {
+          setEditError('That didn’t go through. Please try again in a moment.');
+        }
+        return;
+      }
+
+      // Success — the site was actually saved and counted in Supabase.
+      const savedSiteId = editingSite.id;
+      setEditingSite(null);
+      setEditSuccessNotice('Your changes were saved with love.');
+      window.setTimeout(() => setEditSuccessNotice(''), 4000);
+
+      // If the same site is currently open in the read-only View modal,
+      // refresh that snapshot too so reopening it doesn't show stale data.
+      setViewingSite(prev =>
+        prev && prev.id === savedSiteId ? { ...prev, title: editTitle, answers: updatedAnswers } : prev
+      );
+
+      loadSites(session);
+      fetchUsage(session.userId, session.accessToken).then(setUsageRow);
+    } finally {
+      setEditSaving(false);
+      isSavingEditRef.current = false;
     }
   };
 
@@ -1672,6 +1842,26 @@ export default function App() {
             </button>
           </div>
 
+          {editSuccessNotice && (
+            <p
+              className="relative mb-4 rounded-2xl border border-emerald-300/30 bg-emerald-400/10 px-4 py-3 text-xs text-emerald-100"
+              role="status"
+              aria-live="polite"
+            >
+              {editSuccessNotice}
+            </p>
+          )}
+
+          {editInfoNotice && (
+            <p
+              className="relative mb-4 rounded-2xl border border-white/15 bg-white/5 px-4 py-3 text-xs text-pink-100/80"
+              role="status"
+              aria-live="polite"
+            >
+              {editInfoNotice}
+            </p>
+          )}
+
           {sitesLoading && !sites ? (
             <p className="relative text-sm text-pink-100/70">Loading your saved pages…</p>
           ) : sitesError ? (
@@ -1712,13 +1902,24 @@ export default function App() {
                       {site.completed_at && <span>· Completed {formatSavedDate(site.completed_at)}</span>}
                     </p>
                   </div>
-                  <button
-                    type="button"
-                    onClick={() => setViewingSite(site)}
-                    className="shrink-0 rounded-full border border-white/20 bg-white/5 px-4 py-2 text-xs font-outfit font-bold uppercase tracking-[0.14em] text-pink-100 hover:bg-white/10 transition-colors duration-300 ease-out cursor-pointer"
-                  >
-                    View
-                  </button>
+                  <div className="flex shrink-0 gap-2">
+                    {site.status !== 'published' && (
+                      <button
+                        type="button"
+                        onClick={() => openEditSite(site)}
+                        className="rounded-full border border-white/20 bg-white/5 px-4 py-2 text-xs font-outfit font-bold uppercase tracking-[0.14em] text-pink-100 hover:bg-white/10 transition-colors duration-300 ease-out cursor-pointer"
+                      >
+                        Edit
+                      </button>
+                    )}
+                    <button
+                      type="button"
+                      onClick={() => setViewingSite(site)}
+                      className="rounded-full border border-white/20 bg-white/5 px-4 py-2 text-xs font-outfit font-bold uppercase tracking-[0.14em] text-pink-100 hover:bg-white/10 transition-colors duration-300 ease-out cursor-pointer"
+                    >
+                      View
+                    </button>
+                  </div>
                 </div>
               ))}
             </div>
@@ -1783,6 +1984,117 @@ export default function App() {
                       <p className="text-sm text-pink-100/90 whitespace-pre-wrap">{value || '—'}</p>
                     </div>
                   ))}
+                </div>
+              </div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {editingSite && (
+          <>
+            <motion.div
+              key="site-edit-backdrop"
+              className="fixed inset-0 z-[70] bg-black/55 backdrop-blur-sm"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.3 }}
+              onClick={closeEditSite}
+            />
+            <motion.div
+              key="site-edit"
+              className="fixed inset-0 z-[80] flex items-center justify-center p-4"
+              initial={{ opacity: 0, scale: 0.96 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.96 }}
+              transition={{ duration: 0.3, ease: 'easeOut' }}
+            >
+              <div
+                role="dialog"
+                aria-label="Edit saved Love Page"
+                className="w-full max-w-md rounded-[28px] border border-white/10 bg-gradient-to-b from-[#2c0b17] to-[#1a050d] p-7 sm:p-8 shadow-[0_15px_45px_rgba(0,0,0,0.6)] relative max-h-[85vh] overflow-y-auto"
+              >
+                <button
+                  type="button"
+                  onClick={closeEditSite}
+                  disabled={editSaving}
+                  aria-label="Close"
+                  className="absolute top-6 right-6 flex h-8 w-8 items-center justify-center rounded-full border border-white/15 bg-white/5 text-sm text-pink-100 hover:bg-white/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-pink-200 transition-colors duration-300 ease-out cursor-pointer disabled:opacity-45 disabled:cursor-not-allowed"
+                >
+                  ✕
+                </button>
+
+                <p className="font-outfit uppercase tracking-[0.28em] text-[10px] text-pink-300/65 font-bold mb-5 pr-10">
+                  Edit Love Page
+                </p>
+
+                <label className="grid gap-2 text-xs font-outfit font-bold uppercase tracking-[0.16em] text-pink-200/75 mb-5">
+                  Title
+                  <input
+                    className="w-full p-3.5 bg-white/5 border border-white/10 text-[#fff0f3] text-sm font-sans normal-case tracking-normal focus:bg-white/10 outline-none transition-all duration-300 ease-out rounded-2xl placeholder:text-white/25 hover:border-pink-300/50 focus:border-pink-300 focus:ring-2 focus:ring-pink-300/25"
+                    type="text"
+                    value={editTitle}
+                    onChange={event => setEditTitle(event.target.value)}
+                    placeholder="My Love Page"
+                    disabled={editSaving}
+                  />
+                </label>
+
+                <label className="grid gap-2 text-xs font-outfit font-bold uppercase tracking-[0.16em] text-pink-200/75 mb-5">
+                  A feeling shared
+                  <textarea
+                    className="w-full min-h-[90px] p-3.5 bg-white/5 border border-white/10 text-[#fff0f3] text-sm font-sans normal-case tracking-normal focus:bg-white/10 outline-none resize-none transition-all duration-300 ease-out rounded-2xl placeholder:text-white/25 hover:border-pink-300/50 focus:border-pink-300 focus:ring-2 focus:ring-pink-300/25"
+                    value={editFeeling}
+                    onChange={event => setEditFeeling(event.target.value)}
+                    placeholder="Type your feeling here..."
+                    disabled={editSaving}
+                  />
+                </label>
+
+                <label className="grid gap-2 text-xs font-outfit font-bold uppercase tracking-[0.16em] text-pink-200/75 mb-6">
+                  Final letter
+                  <textarea
+                    className="w-full min-h-[110px] p-3.5 bg-white/5 border border-white/10 text-[#fff0f3] text-sm font-sans normal-case tracking-normal focus:bg-white/10 outline-none resize-none transition-all duration-300 ease-out rounded-2xl placeholder:text-white/25 hover:border-pink-300/50 focus:border-pink-300 focus:ring-2 focus:ring-pink-300/25"
+                    value={editLetter}
+                    onChange={event => setEditLetter(event.target.value)}
+                    placeholder="Write anything you want me to keep close..."
+                    disabled={editSaving}
+                  />
+                </label>
+
+                {editError && (
+                  <p
+                    className={`mb-5 rounded-2xl border px-4 py-3 text-xs ${
+                      editLimitReached
+                        ? 'border-pink-300/30 bg-pink-400/10 text-pink-100'
+                        : 'border-rose-300/25 bg-rose-500/10 text-rose-200'
+                    }`}
+                    role="status"
+                    aria-live="polite"
+                  >
+                    {editError}
+                  </p>
+                )}
+
+                <div className="flex gap-3">
+                  <button
+                    type="button"
+                    onClick={closeEditSite}
+                    disabled={editSaving}
+                    className="flex-1 rounded-full border border-white/20 bg-white/5 px-6 py-3 text-xs font-outfit font-bold uppercase tracking-[0.16em] text-pink-100 hover:bg-white/10 transition-colors duration-300 ease-out cursor-pointer disabled:opacity-45 disabled:cursor-not-allowed"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="button"
+                    onClick={saveEditedSite}
+                    disabled={editSaving}
+                    className="flex-1 rounded-full bg-white text-[#1a050d] px-6 py-3 text-xs font-outfit font-bold uppercase tracking-[0.16em] shadow-[0_10px_30px_rgba(255,255,255,0.08)] hover:shadow-[0_10px_35px_rgba(255,77,109,0.3)] transition-all duration-300 ease-out cursor-pointer disabled:opacity-45 disabled:cursor-not-allowed"
+                  >
+                    {editSaving ? 'Saving…' : 'Save Changes'}
+                  </button>
                 </div>
               </div>
             </motion.div>
