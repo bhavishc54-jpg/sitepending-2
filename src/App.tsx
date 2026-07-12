@@ -1462,11 +1462,29 @@ export default function App() {
           isGlowing={isPBarGlowing}
           isPulsing={isPBarPulsing}
         />
-        {profile && (
-          <span className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 backdrop-blur-md px-4 py-1.5 text-xs font-outfit font-semibold tracking-wide text-pink-100 shadow-[0_4px_16px_rgba(0,0,0,0.3)]">
-            Your Plan: {getPlanLabel(profile)}
-          </span>
-        )}
+        <div className="flex flex-wrap items-center justify-center gap-2">
+          {profile && (
+            <span className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 backdrop-blur-md px-4 py-1.5 text-xs font-outfit font-semibold tracking-wide text-pink-100 shadow-[0_4px_16px_rgba(0,0,0,0.3)]">
+              Your Plan: {getPlanLabel(profile)}
+            </span>
+          )}
+          {/* Always-visible jump link to the "My Love Pages" section below.
+              The main flow card can push that section past the fold on
+              shorter/mobile viewports, and since this page previously read
+              as one self-contained centered card, users had no visual cue
+              that more content existed to scroll to. This anchor sits in
+              the very first viewport on every device, right under the
+              header, so the section is always reachable in one tap. */}
+          <button
+            type="button"
+            onClick={() =>
+              document.getElementById('my-love-pages')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+            }
+            className="inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-white/5 backdrop-blur-md px-4 py-1.5 text-xs font-outfit font-semibold tracking-wide text-pink-100 hover:bg-white/10 transition-colors duration-300 ease-out cursor-pointer shadow-[0_4px_16px_rgba(0,0,0,0.3)]"
+          >
+            My Love Pages ↓
+          </button>
+        </div>
         <AnimatePresence mode="wait">
           {limitBlocked ? (
             <motion.section
@@ -1637,7 +1655,10 @@ export default function App() {
           )}
         </AnimatePresence>
 
-        <section className="w-full rounded-[28px] bg-white/5 backdrop-blur-xl border border-white/10 p-6 sm:p-8 shadow-[0_15px_45px_rgba(0,0,0,0.5)] relative overflow-hidden">
+        <section
+          id="my-love-pages"
+          className="w-full rounded-[28px] bg-white/5 backdrop-blur-xl border border-white/10 p-6 sm:p-8 shadow-[0_15px_45px_rgba(0,0,0,0.5)] relative overflow-hidden scroll-mt-4"
+        >
           <div className="relative flex items-center justify-between gap-4 mb-5 flex-wrap">
             <p className="font-outfit uppercase tracking-[0.28em] text-[10px] text-pink-300/65 font-bold">
               My Love Pages
