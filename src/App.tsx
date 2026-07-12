@@ -87,6 +87,12 @@ interface LoveJourneyState {
   isComplete: boolean;
   siteId: string | null;
   userId: string | null;
+  // Whether the Formspree email has already been sent for this specific
+  // siteId. Always written in the same localStorage blob as siteId, so the
+  // two can never drift apart — there is only ever one saved journey per
+  // user, and a fresh siteId is always saved together with
+  // formspreeSent: false.
+  formspreeSent: boolean;
 }
 
 // Writes the Love Journey progress straight to localStorage, synchronously,
@@ -306,6 +312,36 @@ async function createDraftSite(
   return response.json();
 }
 
+interface CompleteSiteResult {
+  success: boolean;
+  reason?: string;
+  site_id?: string;
+  status?: string;
+  completed_at?: string | null;
+}
+
+// Calls the secure complete_site RPC as the logged-in user (their own
+// access token — never the service_role key). Marks the caller's own site
+// completed; the database side is idempotent, so calling this again after
+// a network failure (without re-sending Formspree) is always safe.
+async function completeSite(accessToken: string, siteId: string): Promise<CompleteSiteResult> {
+  const response = await fetch(`${SUPABASE_URL}/rest/v1/rpc/complete_site`, {
+    method: 'POST',
+    headers: {
+      apikey: SUPABASE_PUBLISHABLE_KEY,
+      Authorization: `Bearer ${accessToken}`,
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({ p_site_id: siteId })
+  });
+
+  if (!response.ok) {
+    throw new Error(`complete_site returned ${response.status}`);
+  }
+
+  return response.json();
+}
+
 export default function App() {
   const savedState = useMemo<Record<string, any>>(() => {
     if (typeof window === 'undefined') return {};
@@ -334,6 +370,7 @@ export default function App() {
   const [submitStatus, setSubmitStatus] = useState<'idle' | 'sending' | 'error'>('idle');
   const [isComplete, setIsComplete] = useState(() => Boolean(savedState.isComplete));
   const [siteId, setSiteId] = useState<string | null>(() => savedState.siteId || null);
+  const [formspreeSent, setFormspreeSent] = useState(() => Boolean(savedState.formspreeSent));
   const [limitBlocked, setLimitBlocked] = useState(false);
   const [isPBarGlowing, setIsPBarGlowing] = useState(false);
   const [isPBarPulsing, setIsPBarPulsing] = useState(false);
@@ -438,9 +475,10 @@ export default function App() {
       answers,
       isComplete,
       siteId,
-      userId: readAuthSession()?.userId ?? null
+      userId: readAuthSession()?.userId ?? null,
+      formspreeSent
     });
-  }, [stepIndex, answers, isComplete, siteId]);
+  }, [stepIndex, answers, isComplete, siteId, formspreeSent]);
 
   useEffect(() => {
     const audio = audioRef.current;
@@ -524,21 +562,21 @@ export default function App() {
     setSubmitStatus('sending');
 
     try {
+      const session = readAuthSession();
+      if (!session) {
+        console.error('[Site] No active session; cannot save this Love Journey.');
+        setSubmitStatus('error');
+        return;
+      }
+
       // A site was already created in an earlier attempt (e.g. Supabase
-      // succeeded but Formspree failed, and the user hit submit again, or
-      // the page was refreshed). Skip create_draft_site entirely — it must
-      // only ever run once per completed Love Journey — and just retry the
-      // email notification below.
+      // succeeded but a later step failed, and the user hit submit again,
+      // or the page was refreshed). Skip create_draft_site entirely — it
+      // must only ever run once per completed Love Journey.
       let currentSiteId = siteId;
+      let alreadySentFormspree = formspreeSent;
 
       if (!currentSiteId) {
-        const session = readAuthSession();
-        if (!session) {
-          console.error('[Site] No active session; cannot save this Love Journey.');
-          setSubmitStatus('error');
-          return;
-        }
-
         const loveJourneyAnswers = {
           ready: 'yes',
           feeling: answers.feeling || '',
@@ -568,21 +606,24 @@ export default function App() {
         }
 
         currentSiteId = rpcResult.site_id ?? null;
+        alreadySentFormspree = false;
         setSiteId(currentSiteId);
+        setFormspreeSent(false);
 
         // Persist the new site id to localStorage right now, synchronously
         // — not just via setSiteId (async/batched) and not just via the
-        // useEffect above (fires after React re-renders). If the browser is
-        // refreshed or closed in the moment right after Supabase creates
-        // the site but before the Formspree call below finishes, this
-        // write guarantees the site id survives, so a retry reuses it
-        // instead of calling create_draft_site a second time.
+        // periodic useEffect (fires after React re-renders). If the browser
+        // is refreshed or closed in the moment right after Supabase creates
+        // the site but before Formspree runs below, this write guarantees
+        // the site id survives, so a retry reuses it instead of calling
+        // create_draft_site a second time.
         saveJourneyState({
           stepIndex,
           answers,
           isComplete: false,
           siteId: currentSiteId,
-          userId: session.userId
+          userId: session.userId,
+          formspreeSent: false
         });
 
         // Real usage just changed in the database — reflect it in the
@@ -590,26 +631,90 @@ export default function App() {
         fetchUsage(session.userId, session.accessToken).then(setUsageRow);
       }
 
-      // The site is confirmed saved in Supabase (just now, or in an earlier
-      // attempt) — only now is it safe to send the email notification.
-      const payload = {
-        _subject: 'Someone completed your love website',
-        ready: 'yes',
-        feeling: answers.feeling || '',
-        promise: 'yes',
-        finalMessage: answers.letter || ''
-      };
+      if (!alreadySentFormspree) {
+        // The draft site is confirmed saved in Supabase (just now, or in an
+        // earlier attempt) — only now is it safe to send the email
+        // notification.
+        const payload = {
+          _subject: 'Someone completed your love website',
+          ready: 'yes',
+          feeling: answers.feeling || '',
+          promise: 'yes',
+          finalMessage: answers.letter || ''
+        };
 
-      const res = await fetch(FORM_ENDPOINT, {
-        method: 'POST',
-        headers: {
-          Accept: 'application/json',
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(payload)
+        let formspreeOk = false;
+        try {
+          const res = await fetch(FORM_ENDPOINT, {
+            method: 'POST',
+            headers: {
+              Accept: 'application/json',
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(payload)
+          });
+          formspreeOk = res.ok;
+        } catch (error) {
+          console.error('[Form] Could not reach Formspree.', error);
+        }
+
+        if (!formspreeOk) {
+          // The draft site stays exactly as it is — nothing to undo, no
+          // second site, no usage change. Retrying later will skip
+          // create_draft_site (siteId is already saved) and simply try
+          // Formspree again.
+          setSubmitStatus('error');
+          return;
+        }
+
+        alreadySentFormspree = true;
+        setFormspreeSent(true);
+
+        // Persist formspreeSent = true synchronously, before calling
+        // complete_site below. If the browser is refreshed or closed
+        // between "Formspree succeeded" and "site marked completed", this
+        // write guarantees a retry skips Formspree instead of emailing the
+        // same completed answers a second time.
+        saveJourneyState({
+          stepIndex,
+          answers,
+          isComplete: false,
+          siteId: currentSiteId,
+          userId: session.userId,
+          formspreeSent: true
+        });
+      }
+
+      // Formspree is confirmed sent (just now, or in an earlier attempt) —
+      // only now do we mark the site itself as completed.
+      let completeResult: CompleteSiteResult;
+      try {
+        completeResult = await completeSite(session.accessToken, currentSiteId as string);
+      } catch (error) {
+        console.error('[Site] Could not reach complete_site.', error);
+        setSubmitStatus('error');
+        return;
+      }
+
+      if (!completeResult.success || (completeResult.status !== 'completed' && completeResult.status !== 'published')) {
+        console.error('[Site] complete_site did not confirm completion.', completeResult);
+        setSubmitStatus('error');
+        return;
+      }
+
+      // Persist the finished state synchronously before flipping the UI,
+      // for the same reason as the earlier saves — a refresh right after
+      // this point must land back on the completed screen, not restart or
+      // re-trigger anything.
+      saveJourneyState({
+        stepIndex,
+        answers,
+        isComplete: true,
+        siteId: currentSiteId,
+        userId: session.userId,
+        formspreeSent: true
       });
 
-      if (!res.ok) throw new Error(`Formspree returned ${res.status}`);
       setIsComplete(true);
       setSubmitStatus('idle');
     } catch (error) {
